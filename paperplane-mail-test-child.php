@@ -1,9 +1,11 @@
 <?php
 /**
  * Plugin Name: PaperPlane Mail Test Child
- * Description: Espone un endpoint REST per il test della funzione mail. Da installare sui siti monitorati.
+ * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
  * Version: 1.3.2
  * Author: Paper Plane Factory
+ * Text Domain: paperplane-mail-test-child
+ * Domain Path: /languages
  * Update URI: https://github.com/paperplanefactory/paperplane-mail-test-child/
  */
 
@@ -17,6 +19,8 @@ define( 'PP_MT_REST_NS', 'pp-mail-test/v1' );
 require_once __DIR__ . '/vendor/autoload.php';
 
 add_action( 'init', function () {
+	load_plugin_textdomain( 'paperplane-mail-test-child', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+
 	$checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
 		'https://github.com/paperplanefactory/paperplane-mail-test-child/',
 		__FILE__,
@@ -79,13 +83,13 @@ function pp_mt_handle_check( WP_REST_Request $request ) {
 		$test_email = get_option( 'admin_email' );
 	}
 
-	$subject = '[Mail Test] ' . get_bloginfo( 'name' ) . ' — ' . date_i18n( 'd/m/Y H:i' );
-	$body    = 'Test automatico della funzione mail da ' . home_url() . '.';
+	$subject = sprintf( __( '[Mail Test] %s — %s', 'paperplane-mail-test-child' ), get_bloginfo( 'name' ), date_i18n( 'd/m/Y H:i' ) );
+	$body    = sprintf( __( 'Automatic mail function test from %s.', 'paperplane-mail-test-child' ), home_url() );
 	$result  = wp_mail( $test_email, $subject, $body );
 
 	return new WP_REST_Response( array(
 		'success' => $result,
-		'message' => $result ? 'Mail inviata correttamente.' : 'wp_mail() ha restituito false.',
+		'message' => $result ? __( 'Mail sent successfully.', 'paperplane-mail-test-child' ) : __( 'wp_mail() returned false.', 'paperplane-mail-test-child' ),
 		'site'    => home_url(),
 		'time'    => current_time( 'mysql' ),
 	), 200 );
@@ -95,8 +99,8 @@ function pp_mt_handle_check( WP_REST_Request $request ) {
 
 add_action( 'admin_menu', function () {
 	add_management_page(
-		'PaperPlane Mail Test',
-		'PaperPlane Mail Test',
+		__( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ),
+		__( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ),
 		'manage_options',
 		'pp-mail-test',
 		'pp_mt_render_options'
@@ -115,50 +119,50 @@ function pp_mt_render_options() {
 	}
 	?>
 	<div class="wrap">
-		<h1>PaperPlane Mail Test</h1>
-		<p>Questo plugin espone un endpoint REST che il sito assistenza PaperPlane può chiamare per verificare che la funzione mail funzioni correttamente.</p>
+		<h1><?php esc_html_e( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ); ?></h1>
+		<p><?php esc_html_e( 'This plugin exposes a REST endpoint that the PaperPlane assistance site can call to verify the mail function works correctly.', 'paperplane-mail-test-child' ); ?></p>
 
-		<h2>1. Chiave segreta</h2>
+		<h2><?php esc_html_e( '1. Secret key', 'paperplane-mail-test-child' ); ?></h2>
 
 		<?php if ( $secret_active ) : ?>
-			<div class="notice notice-success inline"><p>&#10003; Chiave attiva — <code>PP_MAIL_TEST_SECRET</code> è definita in <code>wp-config.php</code>.</p></div>
+			<div class="notice notice-success inline"><p>&#10003; <?php printf( __( 'Key active — %s is defined in %s.', 'paperplane-mail-test-child' ), '<code>PP_MAIL_TEST_SECRET</code>', '<code>wp-config.php</code>' ); ?></p></div>
 			<p style="margin-top:12px">
-				<strong>Chiave attiva:</strong>
+				<strong><?php esc_html_e( 'Active key:', 'paperplane-mail-test-child' ); ?></strong>
 				<code id="pp-mt-key-active"><?php echo esc_html( $secret_active ); ?></code>
-				<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-active', this)">Copia</button>
+				<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-active', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 			</p>
 		<?php else : ?>
 			<div class="notice notice-warning inline">
-				<p>&#9888; <code>PP_MAIL_TEST_SECRET</code> non è ancora definita in <code>wp-config.php</code>. Il plugin non risponderà alle richieste finché non la aggiungi.</p>
+				<p>&#9888; <?php printf( __( 'Warning: %s is not yet defined in %s. The plugin will not respond to requests until you add it.', 'paperplane-mail-test-child' ), '<code>PP_MAIL_TEST_SECRET</code>', '<code>wp-config.php</code>' ); ?></p>
 			</div>
-			<p style="margin-top:12px"><strong>Chiave suggerita</strong> (copiala e incollala in <code>wp-config.php</code>):</p>
+			<p style="margin-top:12px"><?php printf( __( 'Suggested key (copy and paste it into %s):', 'paperplane-mail-test-child' ), '<code>wp-config.php</code>' ); ?></p>
 			<p>
 				<code id="pp-mt-key-suggested"><?php echo esc_html( $secret_suggested ); ?></code>
-				<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-suggested', this)">Copia</button>
+				<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-suggested', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 				<a href="<?php echo esc_url( add_query_arg( 'pp_mt_regen', '1' ) ); ?>" class="button button-secondary" style="margin-left:4px"
-					onclick="return confirm('Generare una nuova chiave suggerita?')">Rigenera</a>
+					onclick="return confirm('<?php echo esc_js( __( 'Generate a new suggested key?', 'paperplane-mail-test-child' ) ); ?>')"><?php esc_html_e( 'Regenerate', 'paperplane-mail-test-child' ); ?></a>
 			</p>
-			<p>Aggiungi questa riga in <code>wp-config.php</code> prima di <code>/* That's all */</code>:</p>
+			<p><?php printf( __( 'Add this line to %s before %s:', 'paperplane-mail-test-child' ), '<code>wp-config.php</code>', '<code>/* That\'s all, stop editing! */</code>' ); ?></p>
 			<pre style="background:#f6f7f7;padding:12px;display:inline-block">define( 'PP_MAIL_TEST_SECRET', '<?php echo esc_html( $secret_suggested ); ?>' );</pre>
 		<?php endif; ?>
 
-		<h2 style="margin-top:2em">2. Dati per il sito assistenza</h2>
+		<h2 style="margin-top:2em"><?php esc_html_e( '2. Assistance site data', 'paperplane-mail-test-child' ); ?></h2>
 		<table class="form-table" role="presentation">
 			<tr>
-				<th>URL sito</th>
+				<th><?php esc_html_e( 'Site URL', 'paperplane-mail-test-child' ); ?></th>
 				<td>
 					<code id="pp-mt-url"><?php echo esc_html( home_url() ); ?></code>
-					<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-url', this)">Copia</button>
+					<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-url', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 				</td>
 			</tr>
 			<tr>
-				<th>Chiave da usare</th>
+				<th><?php esc_html_e( 'Key to use', 'paperplane-mail-test-child' ); ?></th>
 				<td>
 					<?php $key_to_use = $secret_active ?: $secret_suggested; ?>
 					<code id="pp-mt-key-use"><?php echo esc_html( $key_to_use ); ?></code>
-					<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-use', this)">Copia</button>
+					<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-use', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 					<?php if ( ! $secret_active ) : ?>
-						<span style="color:#d63638;margin-left:8px">&#9888; Aggiungi prima la chiave in wp-config.php</span>
+						<span style="color:#d63638;margin-left:8px">&#9888; <?php esc_html_e( 'Add the key to wp-config.php first', 'paperplane-mail-test-child' ); ?></span>
 					<?php endif; ?>
 				</td>
 			</tr>
