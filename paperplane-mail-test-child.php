@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -108,12 +108,16 @@ add_action( 'admin_menu', function () {
 } );
 
 function pp_mt_render_options() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'paperplane-mail-test-child' ) );
+	}
+
 	$secret_active    = pp_mt_get_secret();
 	$secret_suggested = pp_mt_get_suggested_secret();
 	$endpoint         = rest_url( PP_MT_REST_NS . '/check' );
 
-	// Gestione rigenera chiave suggerita
-	if ( isset( $_GET['pp_mt_regen'] ) ) {
+	// Gestione rigenera chiave suggerita (nonce protetto)
+	if ( isset( $_GET['pp_mt_regen'] ) && check_admin_referer( 'pp_mt_regen' ) ) {
 		delete_transient( 'pp_mt_suggested_secret' );
 		$secret_suggested = pp_mt_get_suggested_secret();
 	}
@@ -139,7 +143,7 @@ function pp_mt_render_options() {
 			<p>
 				<code id="pp-mt-key-suggested"><?php echo esc_html( $secret_suggested ); ?></code>
 				<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-suggested', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
-				<a href="<?php echo esc_url( add_query_arg( 'pp_mt_regen', '1' ) ); ?>" class="button button-secondary" style="margin-left:4px"
+				<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'pp_mt_regen', '1' ), 'pp_mt_regen' ) ); ?>" class="button button-secondary" style="margin-left:4px"
 					onclick="return confirm('<?php echo esc_js( __( 'Generate a new suggested key?', 'paperplane-mail-test-child' ) ); ?>')"><?php esc_html_e( 'Regenerate', 'paperplane-mail-test-child' ); ?></a>
 			</p>
 			<p><?php printf( __( 'Add this line to %s before %s:', 'paperplane-mail-test-child' ), '<code>wp-config.php</code>', '<code>/* That\'s all, stop editing! */</code>' ); ?></p>

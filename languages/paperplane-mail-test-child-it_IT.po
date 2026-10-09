@@ -13,6 +13,9 @@ msgstr ""
 "X-Generator: manual\n"
 "X-Domain: paperplane-mail-test-child\n"
 
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Non hai i permessi necessari per accedere a questa pagina."
+
 #: paperplane-mail-test-child.php:84
 msgid "[Mail Test] %s — %s"
 msgstr "[Mail Test] %s — %s"
