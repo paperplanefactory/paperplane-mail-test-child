@@ -90,8 +90,8 @@ function pp_mt_handle_check( WP_REST_Request $request ) {
 
 add_action( 'admin_menu', function () {
 	add_management_page(
-		'Paperplane Mail Test',
-		'Mail Test',
+		'PaperPlane Mail Test',
+		'PaperPlane Mail Test',
 		'manage_options',
 		'pp-mail-test',
 		'pp_mt_render_options'
