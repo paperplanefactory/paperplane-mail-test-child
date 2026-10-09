@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Espone un endpoint REST per il test della funzione mail. Da installare sui siti monitorati.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Paper Plane Factory
  * Update URI: https://github.com/paperplanefactory/paperplane-mail-test-child/
  */
