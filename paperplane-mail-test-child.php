@@ -61,9 +61,13 @@ function pp_mt_auth( WP_REST_Request $request ) {
 		return false;
 	}
 	$auth  = $request->get_header( 'authorization' );
-	$token = '';
-	if ( $auth && str_starts_with( $auth, 'Bearer ' ) ) {
-		$token = substr( $auth, 7 );
+	// Legge la chiave dal body POST (priorità) o dall'header Authorization
+	$token = sanitize_text_field( $request->get_param( 'pp_secret' ) ?? '' );
+	if ( ! $token ) {
+		$auth = $request->get_header( 'authorization' );
+		if ( $auth && str_starts_with( $auth, 'Bearer ' ) ) {
+			$token = substr( $auth, 7 );
+		}
 	}
 	return hash_equals( $secret, $token );
 }
