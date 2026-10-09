@@ -73,8 +73,9 @@ function pp_mt_auth( WP_REST_Request $request ) {
 }
 
 function pp_mt_handle_check( WP_REST_Request $request ) {
-	$test_email = sanitize_email( $request->get_param( 'test_email' ) ?? '' );
-	if ( ! is_email( $test_email ) ) {
+	$raw         = sanitize_text_field( $request->get_param( 'test_email' ) ?? '' );
+	$test_email  = array_filter( array_map( 'sanitize_email', array_map( 'trim', explode( ',', $raw ) ) ) );
+	if ( empty( $test_email ) ) {
 		$test_email = get_option( 'admin_email' );
 	}
 
