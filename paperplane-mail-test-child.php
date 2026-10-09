@@ -17,15 +17,11 @@ define( 'PP_MT_REST_NS', 'pp-mail-test/v1' );
 require_once __DIR__ . '/vendor/autoload.php';
 
 add_action( 'init', function () {
-	if ( ! defined( 'PP_MT_GITHUB_TOKEN' ) ) {
-		return;
-	}
 	$checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
 		'https://github.com/paperplanefactory/paperplane-mail-test-child/',
 		__FILE__,
 		'paperplane-mail-test-child'
 	);
-	$checker->setAuthentication( PP_MT_GITHUB_TOKEN );
 	$checker->setBranch( 'main' );
 } );
 
