@@ -16,9 +16,9 @@ The central site (running the **PaperPlane Mail Test** plugin) periodically call
 
 ## Installation
 
-### 1. Upload the plugin
+### 1. Download and upload the plugin
 
-Upload the `paperplane-mail-test-child` folder to `/wp-content/plugins/` and activate it from the WordPress dashboard.
+Download the latest release from the [GitHub Releases page](https://github.com/paperplanefactory/paperplane-mail-test-child/releases), extract the zip, upload the `paperplane-mail-test-child` folder to `/wp-content/plugins/`, and activate it from the WordPress dashboard.
 
 ### 2. Add the secret key to `wp-config.php`
 
