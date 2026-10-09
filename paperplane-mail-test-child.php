@@ -114,8 +114,8 @@ function pp_mt_render_options() {
 	}
 	?>
 	<div class="wrap">
-		<h1>Paperplane Mail Test</h1>
-		<p>Questo plugin espone un endpoint REST che il sito assistenza Paperplane può chiamare per verificare che la funzione mail funzioni correttamente.</p>
+		<h1>PaperPlane Mail Test</h1>
+		<p>Questo plugin espone un endpoint REST che il sito assistenza PaperPlane può chiamare per verificare che la funzione mail funzioni correttamente.</p>
 
 		<h2>1. Chiave segreta</h2>
 
