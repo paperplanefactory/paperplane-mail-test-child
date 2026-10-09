@@ -163,11 +163,6 @@ function pp_mt_render_options() {
 			</tr>
 		</table>
 
-		<h2 style="margin-top:2em">3. Configurazione server (.htaccess)</h2>
-		<p>Su hosting con Apache + PHP-FPM (configurazione comune), l'header <code>Authorization</code> viene bloccato da Apache e non raggiunge PHP. In questo caso il monitor riceve <strong>HTTP 401</strong> anche se la chiave è corretta.</p>
-		<p>Per risolvere, aggiungi questa riga nel <code>.htaccess</code> del sito, subito dopo <code>RewriteEngine On</code>:</p>
-		<pre style="background:#f6f7f7;padding:12px;display:inline-block">SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1</pre>
-		<p class="description">Su Nginx, aggiungi invece <code>fastcgi_pass_header Authorization;</code> nel blocco server.</p>
 	</div>
 
 	<script>
