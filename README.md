@@ -1,55 +1,61 @@
 # PaperPlane Mail Test Child
 
-Plugin WordPress che espone un endpoint REST per il test automatico della funzione mail. Fa parte del sistema di monitoraggio mail PaperPlane e va installato su ogni sito da monitorare.
+WordPress plugin that exposes a REST endpoint for automated mail function testing. Part of the PaperPlane mail monitoring system — install this on each site to be monitored.
 
-Il sito centrale (con il plugin **PaperPlane Mail Test**) chiama periodicamente l'endpoint, verifica che `wp_mail()` funzioni correttamente e invia una notifica in caso di anomalia.
+The central site (running the **PaperPlane Mail Test** plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 ---
 
-## Requisiti
+## Requirements
 
 - WordPress 5.9+
 - PHP 8.0+
-- Plugin **PaperPlane Mail Test** installato sul sito di monitoraggio centrale
+- **PaperPlane Mail Test** installed on the central monitoring site
 
 ---
 
-## Installazione
+## Installation
 
-### 1. Installa il plugin
+### 1. Upload the plugin
 
-Carica la cartella `paperplane-mail-test-child` nella directory `/wp-content/plugins/` e attiva il plugin dalla dashboard WordPress.
+Upload the `paperplane-mail-test-child` folder to `/wp-content/plugins/` and activate it from the WordPress dashboard.
 
-### 2. Aggiungi la chiave segreta in `wp-config.php`
+### 2. Add the secret key to `wp-config.php`
 
 ```php
-define( 'PP_MAIL_TEST_SECRET', 'chiave-casuale-qui' );
+define( 'PP_MAIL_TEST_SECRET', 'your-random-key-here' );
 ```
 
-La chiave suggerita è disponibile in **Strumenti → PaperPlane Mail Test** una volta attivato il plugin.
+The suggested key is available under **Tools → PaperPlane Mail Test** once the plugin is active.
 
-### 3. Configura il sito nel monitor centrale
+### 3. Add the site to the central monitor
 
-Vai su **Impostazioni → Monitor Mail** sul sito centrale e aggiungi il sito con URL, chiave segreta e frequenza di controllo.
-
----
-
-## Come funziona
-
-1. Il monitor centrale invia una richiesta `POST` autenticata all'endpoint `/wp-json/pp-mail-test/v1/check`
-2. Il plugin esegue `wp_mail()` e restituisce `true` o `false`
-3. Se il risultato è KO, il monitor invia una notifica email agli indirizzi configurati
-
-L'autenticazione avviene tramite la costante `PP_MAIL_TEST_SECRET` definita in `wp-config.php`. La chiave non viene mai salvata nel database.
+Go to **Settings → Mail Monitor** on the central site and add this site with its URL, secret key, and check frequency.
 
 ---
 
-## Aggiornamenti
+## How it works
 
-Il plugin si aggiorna automaticamente dalla dashboard WordPress tramite le release pubblicate su questo repository.
+1. The central monitor sends an authenticated `POST` request to `/wp-json/pp-mail-test/v1/check`
+2. The plugin runs `wp_mail()` and returns `true` or `false`
+3. If the result is KO, the monitor sends an alert email to the configured recipients
+
+Authentication uses the `PP_MAIL_TEST_SECRET` constant defined in `wp-config.php`. The key is never stored in the database.
 
 ---
 
-## Autore
+## Updates
+
+The plugin updates automatically from the WordPress dashboard via releases published on this repository.
+
+---
+
+## Related
+
+- [PaperPlane Mail Test](https://github.com/paperplanefactory/paperplane-mail-test) — install on the central monitoring site
+
+---
+
+## Author
 
 [Paper Plane Factory](https://paperplanefactory.com)
