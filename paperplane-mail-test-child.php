@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.3.4
+ * Version: 1.3.5
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -152,12 +152,16 @@ function pp_mt_render_options() {
 	$secret_active = pp_mt_get_secret();
 	$pending       = get_transient( 'pp_mt_suggested_secret' );
 
-	// Se non c'è chiave attiva né chiave in attesa, genera una nuova chiave
-	if ( ! $secret_active && ! $pending ) {
-		$pending = pp_mt_get_suggested_secret();
+	// Se la costante è già attiva e non c'è una rigenerazione in corso, stato normale.
+	// Se non c'è né chiave attiva né chiave in attesa, genera una nuova chiave.
+	if ( $secret_active && ! $pending ) {
+		$in_setup = false;
+	} elseif ( ! $secret_active && ! $pending ) {
+		$pending  = pp_mt_get_suggested_secret();
+		$in_setup = true;
+	} else {
+		$in_setup = true;
 	}
-
-	$in_setup = (bool) $pending;
 	$result   = sanitize_key( $_GET['pp_mt_result'] ?? '' );
 	?>
 	<div class="wrap">
