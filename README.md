@@ -21,24 +21,40 @@ The plugin is compatible with WordPress Multisite. Install and activate it on ea
 
 ## Installation
 
-### 1. Download and upload the plugin
+### 1. Download the installable zip
 
-Download **`paperplane-mail-test-child.zip`** from the **Assets** of the [latest release](https://github.com/paperplanefactory/paperplane-mail-test-child/releases/latest).
+Use **`paperplane-mail-test-child.zip`** — never GitHub's "Source code" archives.
 
-> **Do not use "Source code (zip)".** GitHub's source archive contains a folder named after the version (e.g. `paperplane-mail-test-child-1.4.8`). Each installation would end up in a differently named folder, and tools like MainWP would list it as a separate plugin. `paperplane-mail-test-child.zip` always installs into `wp-content/plugins/paperplane-mail-test-child/`.
+**Direct download (always the latest version):**
+[paperplane-mail-test-child.zip](https://github.com/paperplanefactory/paperplane-mail-test-child/releases/latest/download/paperplane-mail-test-child.zip)
 
-You can install it in two ways:
+```
+https://github.com/paperplanefactory/paperplane-mail-test-child/releases/latest/download/paperplane-mail-test-child.zip
+```
 
-- **Via WordPress dashboard** — go to **Plugins → Add New → Upload Plugin**, select the zip file, and click Install Now.
-- **Via FTP** — extract the zip and upload the `paperplane-mail-test-child` folder to `/wp-content/plugins/`.
+**Or from the releases page:**
 
-Then activate the plugin from the WordPress dashboard.
+1. Open the [latest release](https://github.com/paperplanefactory/paperplane-mail-test-child/releases/latest)
+2. Scroll down and expand **Assets**
+3. Download **`paperplane-mail-test-child.zip`**
+4. Do **not** download "Source code (zip)" or "Source code (tar.gz)"
 
-### 2. Copy the secret key
+**How to recognise the right file:** it is named exactly `paperplane-mail-test-child.zip` (no version number) and contains a single folder named `paperplane-mail-test-child/`.
+
+> **Why it matters.** The "Source code" archive contains a folder named after the version (e.g. `paperplane-mail-test-child-1.4.8`). WordPress identifies a plugin by its folder name, so each installation would end up in a differently named folder, and tools like MainWP would list it as a separate plugin. Updates keep the original folder name, so the problem never fixes itself.
+>
+> **Already installed from "Source code"?** Rename the folder via FTP to `paperplane-mail-test-child` (e.g. `paperplane-mail-test-child-1.4.8` → `paperplane-mail-test-child`), then reactivate the plugin from **Plugins**. Settings are stored in the database and are kept. Do not delete the old copy from the WordPress dashboard: deleting runs the uninstall routine, which removes the plugin's data.
+
+### 2. Install and activate
+
+- **Via WordPress dashboard** — go to **Plugins → Add New → Upload Plugin**, select `paperplane-mail-test-child.zip`, click **Install Now**, then **Activate**.
+- **Via FTP** — extract the zip and upload the `paperplane-mail-test-child` folder to `/wp-content/plugins/`, then activate the plugin from **Plugins**.
+
+### 3. Copy the secret key
 
 Once the plugin is active, go to **Tools → PaperPlane Mail Test**. A secret key is generated automatically — copy it from there.
 
-### 3. Add the site to the central monitor
+### 4. Add the site to the central monitor
 
 Go to **Mail Monitor → Monitored Sites** on the central site and add this site with its URL, secret key, and check frequency.
 
