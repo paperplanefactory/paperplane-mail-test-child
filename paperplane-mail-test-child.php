@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.2
+ * Version: 1.4.3
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -151,6 +151,29 @@ function pp_mt_handle_actions() {
 	}
 }
 
+// ─── Rate limiting ────────────────────────────────────────────────────────────
+
+define( 'PP_MT_RL_MAX',    20 );
+define( 'PP_MT_RL_WINDOW', 5 * MINUTE_IN_SECONDS );
+
+function pp_mt_rl_key(): string {
+	return 'pp_mt_rl_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' );
+}
+
+function pp_mt_rl_is_blocked(): bool {
+	return (int) get_transient( pp_mt_rl_key() ) >= PP_MT_RL_MAX;
+}
+
+function pp_mt_rl_record_failure(): void {
+	$key   = pp_mt_rl_key();
+	$count = (int) get_transient( $key );
+	set_transient( $key, $count + 1, PP_MT_RL_WINDOW );
+}
+
+function pp_mt_rl_reset(): void {
+	delete_transient( pp_mt_rl_key() );
+}
+
 // ─── REST endpoint ────────────────────────────────────────────────────────────
 
 add_action( 'rest_api_init', function () {
@@ -162,10 +185,15 @@ add_action( 'rest_api_init', function () {
 } );
 
 function pp_mt_auth( WP_REST_Request $request ) {
+	if ( pp_mt_rl_is_blocked() ) {
+		return false;
+	}
+
 	$secret = pp_mt_get_secret();
 	if ( ! $secret ) {
 		return false;
 	}
+
 	// Legge la chiave dal body POST (priorità) o dall'header Authorization
 	$token = sanitize_text_field( $request->get_param( 'pp_secret' ) ?? '' );
 	if ( ! $token ) {
@@ -174,7 +202,14 @@ function pp_mt_auth( WP_REST_Request $request ) {
 			$token = substr( $auth, 7 );
 		}
 	}
-	return hash_equals( $secret, $token );
+
+	$valid = hash_equals( $secret, $token );
+	if ( $valid ) {
+		pp_mt_rl_reset();
+	} else {
+		pp_mt_rl_record_failure();
+	}
+	return $valid;
 }
 
 function pp_mt_handle_check( WP_REST_Request $request ) {

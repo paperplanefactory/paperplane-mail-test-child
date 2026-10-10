@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.2
+Stable tag: 1.4.3
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,9 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.3 =
+* Aggiunto rate limiting sull'endpoint REST: max 20 tentativi falliti per IP in 5 minuti (risposta 401, contatore azzerato al primo tentativo riuscito)
 
 = 1.4.2 =
 * Nuovo flusso di gestione della chiave segreta: mostrata una sola volta alla generazione, nascosta definitivamente dopo il click su "Copia chiave"
