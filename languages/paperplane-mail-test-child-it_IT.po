@@ -16,8 +16,8 @@ msgstr ""
 msgid "You do not have sufficient permissions to access this page."
 msgstr "Non hai i permessi necessari per accedere a questa pagina."
 
-msgid "[Mail Test] %s — %s"
-msgstr "[Mail Test] %s — %s"
+msgid "[PaperPlane Mail Test child site] %s — %s"
+msgstr "[PaperPlane Mail Test child site] %s — %s"
 
 msgid "Automatic mail function test from %s."
 msgstr "Test automatico della funzione mail da %s."
