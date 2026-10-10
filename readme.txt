@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.4
+Stable tag: 1.4.5
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,9 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.5 =
+* Aggiunta dichiarazione `args` in `register_rest_route` con `sanitize_callback` per `test_email` e `pp_check_token` (best practice WordPress REST API)
 
 = 1.4.4 =
 * Ogni email di test include un token univoco per call: header X-PP-Check-Token (immune ai plugin di template) e plus addressing sul destinatario (check+token@dominio.it)

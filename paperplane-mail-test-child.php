@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.4
+ * Version: 1.4.5
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -181,6 +181,22 @@ add_action( 'rest_api_init', function () {
 		'methods'             => 'POST',
 		'callback'            => 'pp_mt_handle_check',
 		'permission_callback' => 'pp_mt_auth',
+		'args'                => array(
+			'test_email'     => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'description'       => 'Comma-separated list of recipient addresses. Defaults to admin_email.',
+			),
+			'pp_check_token' => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => function ( $value ) {
+					return preg_replace( '/[^a-zA-Z0-9]/', '', (string) $value );
+				},
+				'description'       => 'Alphanumeric per-call token for traceability.',
+			),
+		),
 	) );
 } );
 
@@ -228,14 +244,14 @@ function pp_mt_plus_token( string $email, string $token ): string {
 }
 
 function pp_mt_handle_check( WP_REST_Request $request ) {
-	$raw        = sanitize_text_field( $request->get_param( 'test_email' ) ?? '' );
+	$raw        = $request->get_param( 'test_email' ) ?? '';
 	$recipients = array_filter( array_map( 'sanitize_email', array_map( 'trim', explode( ',', $raw ) ) ) );
 	if ( empty( $recipients ) ) {
 		$recipients = (array) get_option( 'admin_email' );
 	}
 
 	// Token univoco per questa call — sopravvive ai plugin di template mail
-	$token = preg_replace( '/[^a-zA-Z0-9]/', '', $request->get_param( 'pp_check_token' ) ?? '' );
+	$token = $request->get_param( 'pp_check_token' ) ?? '';
 	if ( $token ) {
 		// Plus addressing: check+{token}@dominio.it
 		$recipients = array_map( fn( $e ) => pp_mt_plus_token( $e, $token ), $recipients );
