@@ -90,3 +90,21 @@ msgstr "Chiave segreta"
 
 msgid "Add the key to wp-config.php first"
 msgstr "Aggiungi prima la chiave in wp-config.php"
+
+msgid "New key generated. Copy it and update the main plugin configuration."
+msgstr "Nuova chiave generata. Copiala e aggiorna la configurazione nel plugin principale."
+
+msgid "A secret key has been generated automatically. Copy it and add this site to the main plugin."
+msgstr "Una chiave segreta è stata generata automaticamente. Copiala e aggiungi questo sito al plugin principale."
+
+msgid "Key active — stored securely in the database."
+msgstr "Chiave attiva — salvata in modo sicuro nel database."
+
+msgid "Show key"
+msgstr "Mostra chiave"
+
+msgid "Hide key"
+msgstr "Nascondi chiave"
+
+msgid "Regenerate the secret key? The old key will stop working immediately — update the main plugin configuration with the new key."
+msgstr "Rigenerare la chiave segreta? La vecchia chiave smetterà di funzionare immediatamente — aggiorna la configurazione nel plugin principale con la nuova chiave."

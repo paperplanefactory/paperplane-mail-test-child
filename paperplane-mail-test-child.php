@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.3.6
+ * Version: 1.4.0
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -13,7 +13,53 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'PP_MT_REST_NS', 'pp-mail-test/v1' );
+define( 'PP_MT_REST_NS',      'pp-mail-test/v1' );
+define( 'PP_MT_OPTION_SECRET', 'pp_mt_secret_key' );
+
+// ─── Cifratura chiave in wp_options ──────────────────────────────────────────
+
+function pp_mt_get_db_encryption_key(): string {
+	$salt    = defined( 'AUTH_KEY' ) ? AUTH_KEY : ( defined( 'SECURE_AUTH_KEY' ) ? SECURE_AUTH_KEY : '' );
+	$blog_id = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 1;
+	return hash( 'sha256', $salt . 'pp_mt_v1_' . $blog_id, true );
+}
+
+function pp_mt_encrypt_secret( string $plaintext ): string {
+	if ( ! extension_loaded( 'openssl' ) || $plaintext === '' ) {
+		return $plaintext;
+	}
+	$key = pp_mt_get_db_encryption_key();
+	$iv  = openssl_random_pseudo_bytes( 16 );
+	$enc = openssl_encrypt( $plaintext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv );
+	if ( $enc === false ) {
+		return $plaintext;
+	}
+	return 'enc1:' . base64_encode( $iv . $enc );
+}
+
+function pp_mt_decrypt_secret( string $ciphertext ): string {
+	if ( ! str_starts_with( $ciphertext, 'enc1:' ) ) {
+		return $ciphertext;
+	}
+	if ( ! extension_loaded( 'openssl' ) ) {
+		return '';
+	}
+	$key = pp_mt_get_db_encryption_key();
+	$raw = base64_decode( substr( $ciphertext, 5 ) );
+	if ( strlen( $raw ) <= 16 ) {
+		return '';
+	}
+	$iv  = substr( $raw, 0, 16 );
+	$enc = substr( $raw, 16 );
+	$dec = openssl_decrypt( $enc, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv );
+	return $dec !== false ? $dec : '';
+}
+
+function pp_mt_generate_and_save_secret(): string {
+	$secret = wp_generate_password( 32, false );
+	update_option( PP_MT_OPTION_SECRET, pp_mt_encrypt_secret( $secret ) );
+	return $secret;
+}
 
 // ─── Auto-aggiornamenti da GitHub ─────────────────────────────────────────────
 require_once __DIR__ . '/vendor/autoload.php';
@@ -30,17 +76,22 @@ add_action( 'init', function () {
 } );
 
 // ─── Chiave segreta ───────────────────────────────────────────────────────────
-// Letta da wp-config.php se definita, altrimenti da un valore temporaneo
-// generato e mostrato nella pagina opzioni (da copiare manualmente in wp-config).
+// Priorità: 1) costante PP_MAIL_TEST_SECRET in wp-config.php (retrocompatibilità)
+//           2) chiave cifrata in wp_options (nuovo comportamento, supporta multisite)
 
-function pp_mt_get_secret() {
+function pp_mt_get_secret(): string {
 	if ( defined( 'PP_MAIL_TEST_SECRET' ) && PP_MAIL_TEST_SECRET ) {
 		return PP_MAIL_TEST_SECRET;
+	}
+	$stored = get_option( PP_MT_OPTION_SECRET, '' );
+	if ( $stored ) {
+		return pp_mt_decrypt_secret( $stored );
 	}
 	return '';
 }
 
-function pp_mt_get_suggested_secret() {
+// Usata solo nel flusso legacy wp-config (siti già configurati con la costante).
+function pp_mt_get_suggested_secret(): string {
 	$s = get_transient( 'pp_mt_suggested_secret' );
 	if ( ! $s ) {
 		$s = wp_generate_password( 32, false );
@@ -58,9 +109,12 @@ function pp_mt_handle_actions() {
 		return;
 	}
 
-	if ( ( $_POST['pp_mt_action'] ?? '' ) === 'pp_mt_verify' && check_admin_referer( 'pp_mt_verify' ) ) {
-		$page_url = admin_url( 'tools.php?page=pp-mail-test' );
-		$pending  = get_transient( 'pp_mt_suggested_secret' );
+	$action   = $_POST['pp_mt_action'] ?? '';
+	$page_url = admin_url( 'tools.php?page=pp-mail-test' );
+
+	// ── Verifica chiave wp-config (flusso legacy) ──────────────────────────────
+	if ( $action === 'pp_mt_verify' && check_admin_referer( 'pp_mt_verify' ) ) {
+		$pending = get_transient( 'pp_mt_suggested_secret' );
 
 		if ( ! $pending ) {
 			wp_safe_redirect( add_query_arg( 'pp_mt_result', 'no_pending', $page_url ) );
@@ -77,6 +131,13 @@ function pp_mt_handle_actions() {
 
 		delete_transient( 'pp_mt_suggested_secret' );
 		wp_safe_redirect( add_query_arg( 'pp_mt_result', 'ok', $page_url ) );
+		exit;
+	}
+
+	// ── Rigenera chiave database ───────────────────────────────────────────────
+	if ( $action === 'regen_db_secret' && check_admin_referer( 'pp_mt_regen_db' ) ) {
+		pp_mt_generate_and_save_secret();
+		wp_safe_redirect( add_query_arg( 'pp_mt_result', 'regen_ok', $page_url ) );
 		exit;
 	}
 }
@@ -144,25 +205,36 @@ function pp_mt_render_options() {
 		wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'paperplane-mail-test-child' ) );
 	}
 
-	// Rigenera chiave (cancella il transient — ne verrà generato uno nuovo sotto)
+	// Rigenera chiave wp-config (flusso legacy)
 	if ( isset( $_GET['pp_mt_regen'] ) && check_admin_referer( 'pp_mt_regen' ) ) {
 		delete_transient( 'pp_mt_suggested_secret' );
 	}
 
-	$secret_active = pp_mt_get_secret();
-	$pending       = get_transient( 'pp_mt_suggested_secret' );
+	$result  = sanitize_key( $_GET['pp_mt_result'] ?? '' );
+	$pending = get_transient( 'pp_mt_suggested_secret' );
 
-	// Se la costante è già attiva e non c'è una rigenerazione in corso, stato normale.
-	// Se non c'è né chiave attiva né chiave in attesa, genera una nuova chiave.
-	if ( $secret_active && ! $pending ) {
-		$in_setup = false;
-	} elseif ( ! $secret_active && ! $pending ) {
-		$pending  = pp_mt_get_suggested_secret();
-		$in_setup = true;
+	// Determina la sorgente della chiave attiva.
+	$wpconfig_active = defined( 'PP_MAIL_TEST_SECRET' ) && PP_MAIL_TEST_SECRET;
+	$stored_enc      = get_option( PP_MT_OPTION_SECRET, '' );
+
+	if ( $pending ) {
+		// Flusso legacy in corso: l'utente sta configurando la chiave in wp-config.php
+		$source         = 'wpconfig_setup';
+		$display_secret = $pending;
+	} elseif ( $wpconfig_active ) {
+		// Chiave attiva tramite costante wp-config.php (retrocompatibilità)
+		$source         = 'wpconfig_active';
+		$display_secret = '';
+	} elseif ( $stored_enc ) {
+		// Chiave attiva tramite wp_options (nuovo comportamento)
+		$source         = 'dboption';
+		$display_secret = pp_mt_decrypt_secret( $stored_enc );
 	} else {
-		$in_setup = true;
+		// Prima installazione o nessuna chiave — genera automaticamente
+		$display_secret = pp_mt_generate_and_save_secret();
+		$source         = 'dboption';
+		$result         = 'new_key';
 	}
-	$result   = sanitize_key( $_GET['pp_mt_result'] ?? '' );
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ); ?></h1>
@@ -174,24 +246,24 @@ function pp_mt_render_options() {
 			<div class="notice notice-error is-dismissible"><p><?php printf( __( '%s is not defined in %s. Add the line shown below and try again.', 'paperplane-mail-test-child' ), '<code>PP_MAIL_TEST_SECRET</code>', '<code>wp-config.php</code>' ); ?></p></div>
 		<?php elseif ( $result === 'mismatch' ) : ?>
 			<div class="notice notice-error is-dismissible"><p><?php printf( __( 'The key does not match. Make sure you copied the value shown below exactly into %s.', 'paperplane-mail-test-child' ), '<code>wp-config.php</code>' ); ?></p></div>
+		<?php elseif ( $result === 'regen_ok' ) : ?>
+			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'New key generated. Copy it and update the main plugin configuration.', 'paperplane-mail-test-child' ); ?></p></div>
+		<?php elseif ( $result === 'new_key' ) : ?>
+			<div class="notice notice-info is-dismissible"><p><?php esc_html_e( 'A secret key has been generated automatically. Copy it and add this site to the main plugin.', 'paperplane-mail-test-child' ); ?></p></div>
 		<?php endif; ?>
 
 		<h2><?php esc_html_e( '1. Secret key', 'paperplane-mail-test-child' ); ?></h2>
 
-		<?php if ( $in_setup ) : ?>
-
+		<?php if ( $source === 'wpconfig_setup' ) : ?>
 			<div class="notice notice-warning inline" style="border-left-color:#d63638">
 				<p><strong><?php esc_html_e( 'Copy this key now — it will no longer be shown after verification.', 'paperplane-mail-test-child' ); ?></strong></p>
 			</div>
-
 			<p style="margin-top:12px">
-				<code id="pp-mt-key-pending" style="font-size:1.1em"><?php echo esc_html( $pending ); ?></code>
+				<code id="pp-mt-key-pending" style="font-size:1.1em"><?php echo esc_html( $display_secret ); ?></code>
 				<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-pending', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 			</p>
-
 			<p><?php printf( __( 'Add this line to %s before %s:', 'paperplane-mail-test-child' ), '<code>wp-config.php</code>', '<code>/* That\'s all, stop editing! */</code>' ); ?></p>
-			<pre style="background:#f6f7f7;padding:12px;display:inline-block">define( 'PP_MAIL_TEST_SECRET', '<?php echo esc_html( $pending ); ?>' );</pre>
-
+			<pre style="background:#f6f7f7;padding:12px;display:inline-block">define( 'PP_MAIL_TEST_SECRET', '<?php echo esc_html( $display_secret ); ?>' );</pre>
 			<p style="margin-top:16px"><?php esc_html_e( 'Once you have added the line, click the button below to verify the configuration.', 'paperplane-mail-test-child' ); ?></p>
 			<form method="post">
 				<?php wp_nonce_field( 'pp_mt_verify' ); ?>
@@ -203,8 +275,7 @@ function pp_mt_render_options() {
 				><?php esc_html_e( 'Generate a different key', 'paperplane-mail-test-child' ); ?></a>
 			</form>
 
-		<?php else : ?>
-
+		<?php elseif ( $source === 'wpconfig_active' ) : ?>
 			<div class="notice notice-success inline">
 				<p>&#10003; <?php printf( __( 'Key active — %s is defined in %s.', 'paperplane-mail-test-child' ), '<code>PP_MAIL_TEST_SECRET</code>', '<code>wp-config.php</code>' ); ?></p>
 			</div>
@@ -213,6 +284,25 @@ function pp_mt_render_options() {
 					class="button button-secondary"
 					onclick="return confirm('<?php echo esc_js( __( 'Regenerate the secret key? You will need to update wp-config.php with the new value.', 'paperplane-mail-test-child' ) ); ?>')"
 				><?php esc_html_e( 'Regenerate key', 'paperplane-mail-test-child' ); ?></a>
+			</p>
+
+		<?php else : ?>
+			<div class="notice notice-success inline">
+				<p>&#10003; <?php esc_html_e( 'Key active — stored securely in the database.', 'paperplane-mail-test-child' ); ?></p>
+			</div>
+			<p style="margin-top:12px">
+				<span id="pp-mt-key-db" style="display:none"><code style="font-size:1.1em"><?php echo esc_html( $display_secret ); ?></code></span>
+				<button type="button" class="button button-secondary" id="pp-mt-reveal-btn" onclick="pp_mt_toggle_key()"><?php esc_html_e( 'Show key', 'paperplane-mail-test-child' ); ?></button>
+				<button type="button" class="button button-secondary" style="margin-left:4px" onclick="pp_mt_copy_text(<?php echo wp_json_encode( $display_secret ); ?>, this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
+			</p>
+			<p style="margin-top:12px">
+				<form method="post" style="display:inline">
+					<?php wp_nonce_field( 'pp_mt_regen_db' ); ?>
+					<input type="hidden" name="pp_mt_action" value="regen_db_secret">
+					<button type="submit" class="button button-secondary"
+						onclick="return confirm('<?php echo esc_js( __( 'Regenerate the secret key? The old key will stop working immediately — update the main plugin configuration with the new key.', 'paperplane-mail-test-child' ) ); ?>')"
+					><?php esc_html_e( 'Regenerate key', 'paperplane-mail-test-child' ); ?></button>
+				</form>
 			</p>
 
 		<?php endif; ?>
@@ -226,13 +316,20 @@ function pp_mt_render_options() {
 					<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-url', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 				</td>
 			</tr>
-			<?php if ( $in_setup ) : ?>
+			<?php if ( $source === 'wpconfig_setup' ) : ?>
 			<tr>
 				<th><?php esc_html_e( 'Secret key', 'paperplane-mail-test-child' ); ?></th>
 				<td>
-					<code id="pp-mt-key-use"><?php echo esc_html( $pending ); ?></code>
+					<code id="pp-mt-key-use"><?php echo esc_html( $display_secret ); ?></code>
 					<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy('pp-mt-key-use', this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 					<span style="color:#d63638;margin-left:8px">&#9888; <?php esc_html_e( 'Add the key to wp-config.php first', 'paperplane-mail-test-child' ); ?></span>
+				</td>
+			</tr>
+			<?php elseif ( $source === 'dboption' ) : ?>
+			<tr>
+				<th><?php esc_html_e( 'Secret key', 'paperplane-mail-test-child' ); ?></th>
+				<td>
+					<button type="button" class="button button-secondary" onclick="pp_mt_copy_text(<?php echo wp_json_encode( $display_secret ); ?>, this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 				</td>
 			</tr>
 			<?php endif; ?>
@@ -248,6 +345,24 @@ function pp_mt_render_options() {
 			btn.textContent = '<?php echo esc_js( __( 'Copied!', 'paperplane-mail-test-child' ) ); ?>';
 			setTimeout(function() { btn.textContent = orig; }, 2000);
 		});
+	}
+	function pp_mt_copy_text(text, btn) {
+		navigator.clipboard.writeText(text).then(function() {
+			var orig = btn.textContent;
+			btn.textContent = '<?php echo esc_js( __( 'Copied!', 'paperplane-mail-test-child' ) ); ?>';
+			setTimeout(function() { btn.textContent = orig; }, 2000);
+		});
+	}
+	function pp_mt_toggle_key() {
+		var el  = document.getElementById('pp-mt-key-db');
+		var btn = document.getElementById('pp-mt-reveal-btn');
+		if ( el.style.display === 'none' ) {
+			el.style.display = 'inline';
+			btn.textContent  = '<?php echo esc_js( __( 'Hide key', 'paperplane-mail-test-child' ) ); ?>';
+		} else {
+			el.style.display = 'none';
+			btn.textContent  = '<?php echo esc_js( __( 'Show key', 'paperplane-mail-test-child' ) ); ?>';
+		}
 	}
 	</script>
 	<?php
