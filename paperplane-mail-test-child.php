@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.7
+ * Version: 1.4.8
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -74,6 +74,8 @@ add_action( 'init', function () {
 		'paperplane-mail-test-child'
 	);
 	$checker->setBranch( 'main' );
+	// Usa lo zip allegato alla release (cartella paperplane-mail-test-child/); se manca, ripiega sullo zip sorgente.
+	$checker->getVcsApi()->enableReleaseAssets( '/^paperplane-mail-test-child\.zip$/' );
 } );
 
 // ─── Chiave segreta ───────────────────────────────────────────────────────────

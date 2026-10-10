@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.7
+Stable tag: 1.4.8
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,11 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.8 =
+* Release: ogni release include `paperplane-mail-test-child.zip` (cartella a nome fisso `paperplane-mail-test-child/`), generato automaticamente da una GitHub Action
+* Aggiornamenti: Plugin Update Checker usa lo zip allegato alla release invece dello zip sorgente di GitHub
+* README: installare da `paperplane-mail-test-child.zip`, non da "Source code (zip)"
 
 = 1.4.7 =
 * Security: `pp_secret` accettato solo come stringa (un array generava un PHP warning che esponeva il path del server)
