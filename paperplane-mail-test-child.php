@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.3
+ * Version: 1.4.4
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -212,16 +212,44 @@ function pp_mt_auth( WP_REST_Request $request ) {
 	return $valid;
 }
 
+function pp_mt_plus_token( string $email, string $token ): string {
+	$at = strrpos( $email, '@' );
+	if ( $at === false ) {
+		return $email;
+	}
+	$local  = substr( $email, 0, $at );
+	$domain = substr( $email, $at );
+	// Rimuove un eventuale tag + già presente
+	$plus = strpos( $local, '+' );
+	if ( $plus !== false ) {
+		$local = substr( $local, 0, $plus );
+	}
+	return $local . '+' . $token . $domain;
+}
+
 function pp_mt_handle_check( WP_REST_Request $request ) {
-	$raw         = sanitize_text_field( $request->get_param( 'test_email' ) ?? '' );
-	$test_email  = array_filter( array_map( 'sanitize_email', array_map( 'trim', explode( ',', $raw ) ) ) );
-	if ( empty( $test_email ) ) {
-		$test_email = get_option( 'admin_email' );
+	$raw        = sanitize_text_field( $request->get_param( 'test_email' ) ?? '' );
+	$recipients = array_filter( array_map( 'sanitize_email', array_map( 'trim', explode( ',', $raw ) ) ) );
+	if ( empty( $recipients ) ) {
+		$recipients = (array) get_option( 'admin_email' );
+	}
+
+	// Token univoco per questa call — sopravvive ai plugin di template mail
+	$token = preg_replace( '/[^a-zA-Z0-9]/', '', $request->get_param( 'pp_check_token' ) ?? '' );
+	if ( $token ) {
+		// Plus addressing: check+{token}@dominio.it
+		$recipients = array_map( fn( $e ) => pp_mt_plus_token( $e, $token ), $recipients );
+	}
+
+	$headers = array();
+	if ( $token ) {
+		// Header custom: immune a qualsiasi plugin di template
+		$headers[] = 'X-PP-Check-Token: ' . $token;
 	}
 
 	$subject = sprintf( __( '[PaperPlane Mail Test child site] %s — %s', 'paperplane-mail-test-child' ), get_bloginfo( 'name' ), date_i18n( 'd/m/Y H:i' ) );
 	$body    = sprintf( __( 'Automatic mail function test from %s.', 'paperplane-mail-test-child' ), home_url() );
-	$result  = wp_mail( $test_email, $subject, $body );
+	$result  = wp_mail( $recipients, $subject, $body, $headers );
 
 	return new WP_REST_Response( array(
 		'success' => $result,
