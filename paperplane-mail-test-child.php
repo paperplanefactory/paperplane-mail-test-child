@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.0
+ * Version: 1.4.1
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -157,7 +157,6 @@ function pp_mt_auth( WP_REST_Request $request ) {
 	if ( ! $secret ) {
 		return false;
 	}
-	$auth  = $request->get_header( 'authorization' );
 	// Legge la chiave dal body POST (priorità) o dall'header Authorization
 	$token = sanitize_text_field( $request->get_param( 'pp_secret' ) ?? '' );
 	if ( ! $token ) {
@@ -208,6 +207,11 @@ function pp_mt_render_options() {
 	// Rigenera chiave wp-config (flusso legacy)
 	if ( isset( $_GET['pp_mt_regen'] ) && check_admin_referer( 'pp_mt_regen' ) ) {
 		delete_transient( 'pp_mt_suggested_secret' );
+		// Se la costante è ancora in wp-config, genera una nuova chiave suggerita
+		// così l'utente entra nel flusso wpconfig_setup con il nuovo valore.
+		if ( defined( 'PP_MAIL_TEST_SECRET' ) && PP_MAIL_TEST_SECRET ) {
+			pp_mt_get_suggested_secret();
+		}
 	}
 
 	$result  = sanitize_key( $_GET['pp_mt_result'] ?? '' );
