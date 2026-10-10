@@ -10,7 +10,12 @@ The central site (running the **PaperPlane Mail Test** plugin) periodically call
 
 - WordPress 5.9+
 - PHP 8.0+
+- PHP OpenSSL extension (required for secret key encryption)
 - **PaperPlane Mail Test** installed on the central monitoring site
+
+## Multisite
+
+The plugin is compatible with WordPress Multisite. Install and activate it on each subsite you want to monitor. Each subsite gets its own secret key, stored encrypted in its own `wp_options` table — no shared configuration across the network.
 
 ---
 
@@ -27,13 +32,9 @@ You can install it in two ways:
 
 Then activate the plugin from the WordPress dashboard.
 
-### 2. Add the secret key to `wp-config.php`
+### 2. Copy the secret key
 
-```php
-define( 'PP_MAIL_TEST_SECRET', 'your-random-key-here' );
-```
-
-The suggested key is available under **Tools → PaperPlane Mail Test** once the plugin is active.
+Once the plugin is active, go to **Tools → PaperPlane Mail Test**. A secret key is generated automatically — copy it from there.
 
 ### 3. Add the site to the central monitor
 
@@ -47,7 +48,7 @@ Go to **Settings → Mail Monitor** on the central site and add this site with i
 2. The plugin runs `wp_mail()` and returns `true` or `false`
 3. If the result is KO, the monitor sends an alert email to the configured recipients
 
-Authentication uses the `PP_MAIL_TEST_SECRET` constant defined in `wp-config.php`. The key is never stored in the database.
+Authentication uses a secret key generated automatically on first activation and stored encrypted (AES-256-CBC) in `wp_options`. On existing installations that already have a `PP_MAIL_TEST_SECRET` constant in `wp-config.php`, that constant takes priority and continues to work without changes.
 
 ---
 
