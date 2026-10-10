@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the PaperPlane Mail Test Child plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: PaperPlane Mail Test Child 1.4.1\n"
+"Project-Id-Version: PaperPlane Mail Test Child 1.4.2\n"
 "Report-Msgid-Bugs-To: https://github.com/paperplanefactory/paperplane-mail-test-child\n"
 "POT-Creation-Date: 2026-10-09\n"
 "PO-Revision-Date: 2026-10-09\n"
@@ -108,3 +108,45 @@ msgstr "Nascondi chiave"
 
 msgid "Regenerate the secret key? The old key will stop working immediately — update the main plugin configuration with the new key."
 msgstr "Rigenerare la chiave segreta? La vecchia chiave smetterà di funzionare immediatamente — aggiorna la configurazione nel plugin principale con la nuova chiave."
+
+msgid "PaperPlane Mail Test:"
+msgstr "PaperPlane Mail Test:"
+
+msgid "the secret key has not been copied yet."
+msgstr "la chiave segreta non è stata ancora copiata."
+
+msgid "Copy it now →"
+msgstr "Copiala ora →"
+
+msgid "Copy the key now."
+msgstr "Copia la chiave ora."
+
+msgid "Clicking \"Copy key\" will permanently hide it. Make sure to paste it into the main plugin before proceeding — it cannot be recovered, only regenerated."
+msgstr "Cliccando \"Copia chiave\" verrà nascosta definitivamente. Incollala nel plugin principale prima di procedere — non potrà essere recuperata, solo rigenerata."
+
+msgid "Copy key"
+msgstr "Copia chiave"
+
+msgid "Could not copy automatically. Copy the key manually from the field above, then click the button below."
+msgstr "Impossibile copiare automaticamente. Copia la chiave manualmente dal campo qui sopra, poi clicca il pulsante qui sotto."
+
+msgid "I have copied the key"
+msgstr "Ho copiato la chiave"
+
+msgid "Generate new key"
+msgstr "Genera nuova chiave"
+
+msgid "Generating a new key will immediately invalidate the current one — update the main plugin configuration afterwards."
+msgstr "Generare una nuova chiave invaliderà immediatamente quella attuale — aggiorna la configurazione nel plugin principale dopo."
+
+msgid "Hidden — generate a new key if you need to reconfigure."
+msgstr "Nascosta — genera una nuova chiave se devi riconfigurare."
+
+msgid "Regenerate the secret key? The current key will stop working immediately — you will need to update the main plugin with the new key."
+msgstr "Rigenerare la chiave segreta? Quella attuale smetterà di funzionare immediatamente — aggiorna il plugin principale con la nuova chiave."
+
+msgid "New key generated. Copy it now — it will be hidden after you click \"Copy key\"."
+msgstr "Nuova chiave generata. Copiala ora — verrà nascosta dopo aver cliccato \"Copia chiave\"."
+
+msgid "A secret key has been generated automatically. Copy it now — it will be hidden after you click \"Copy key\"."
+msgstr "Una chiave segreta è stata generata automaticamente. Copiala ora — verrà nascosta dopo aver cliccato \"Copia chiave\"."

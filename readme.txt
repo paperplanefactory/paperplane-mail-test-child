@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,12 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.2 =
+* Nuovo flusso di gestione della chiave segreta: mostrata una sola volta alla generazione, nascosta definitivamente dopo il click su "Copia chiave"
+* Admin notice su tutta la dashboard finché la chiave non viene copiata
+* Fallback manuale se la clipboard API non è disponibile
+* `uninstall.php`: aggiunta pulizia di `pp_mt_key_copied`
 
 = 1.4.1 =
 * Fix: il bottone "Rigenera chiave" nello stato wpconfig_active ora genera correttamente una nuova chiave suggerita

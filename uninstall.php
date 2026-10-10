@@ -8,8 +8,10 @@ if ( is_multisite() ) {
 	foreach ( $sites as $site ) {
 		switch_to_blog( $site->blog_id );
 		delete_option( 'pp_mt_secret_key' );
+		delete_option( 'pp_mt_key_copied' );
 		restore_current_blog();
 	}
 } else {
 	delete_option( 'pp_mt_secret_key' );
+	delete_option( 'pp_mt_key_copied' );
 }

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -13,8 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'PP_MT_REST_NS',      'pp-mail-test/v1' );
-define( 'PP_MT_OPTION_SECRET', 'pp_mt_secret_key' );
+define( 'PP_MT_REST_NS',        'pp-mail-test/v1' );
+define( 'PP_MT_OPTION_SECRET',  'pp_mt_secret_key' );
+define( 'PP_MT_OPTION_COPIED',  'pp_mt_key_copied' );
 
 // ─── Cifratura chiave in wp_options ──────────────────────────────────────────
 
@@ -134,9 +135,17 @@ function pp_mt_handle_actions() {
 		exit;
 	}
 
+	// ── Marca chiave come copiata ─────────────────────────────────────────────
+	if ( $action === 'mark_key_copied' && check_admin_referer( 'pp_mt_mark_copied' ) ) {
+		update_option( PP_MT_OPTION_COPIED, 1 );
+		wp_safe_redirect( $page_url );
+		exit;
+	}
+
 	// ── Rigenera chiave database ───────────────────────────────────────────────
 	if ( $action === 'regen_db_secret' && check_admin_referer( 'pp_mt_regen_db' ) ) {
 		pp_mt_generate_and_save_secret();
+		update_option( PP_MT_OPTION_COPIED, 0 ); // torna alla Fase 1
 		wp_safe_redirect( add_query_arg( 'pp_mt_result', 'regen_ok', $page_url ) );
 		exit;
 	}
@@ -189,6 +198,31 @@ function pp_mt_handle_check( WP_REST_Request $request ) {
 
 // ─── Pagina opzioni ───────────────────────────────────────────────────────────
 
+// ─── Admin notice: chiave non ancora copiata ──────────────────────────────────
+
+add_action( 'admin_notices', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$wpconfig_active = defined( 'PP_MAIL_TEST_SECRET' ) && PP_MAIL_TEST_SECRET;
+	$pending         = get_transient( 'pp_mt_suggested_secret' );
+	$stored_enc      = get_option( PP_MT_OPTION_SECRET, '' );
+	$key_copied      = get_option( PP_MT_OPTION_COPIED, 0 );
+
+	if ( ! $wpconfig_active && ! $pending && $stored_enc && ! $key_copied ) {
+		$url = admin_url( 'tools.php?page=pp-mail-test' );
+		echo '<div class="notice notice-error"><p>';
+		printf(
+			'<strong>%s</strong> %s <a href="%s">%s</a>',
+			esc_html__( 'PaperPlane Mail Test:', 'paperplane-mail-test-child' ),
+			esc_html__( 'the secret key has not been copied yet.', 'paperplane-mail-test-child' ),
+			esc_url( $url ),
+			esc_html__( 'Copy it now →', 'paperplane-mail-test-child' )
+		);
+		echo '</p></div>';
+	}
+} );
+
 add_action( 'admin_menu', function () {
 	add_management_page(
 		__( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ),
@@ -239,6 +273,8 @@ function pp_mt_render_options() {
 		$source         = 'dboption';
 		$result         = 'new_key';
 	}
+
+	$key_copied = (bool) get_option( PP_MT_OPTION_COPIED, 0 );
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ); ?></h1>
@@ -251,9 +287,9 @@ function pp_mt_render_options() {
 		<?php elseif ( $result === 'mismatch' ) : ?>
 			<div class="notice notice-error is-dismissible"><p><?php printf( __( 'The key does not match. Make sure you copied the value shown below exactly into %s.', 'paperplane-mail-test-child' ), '<code>wp-config.php</code>' ); ?></p></div>
 		<?php elseif ( $result === 'regen_ok' ) : ?>
-			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'New key generated. Copy it and update the main plugin configuration.', 'paperplane-mail-test-child' ); ?></p></div>
+			<div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'New key generated. Copy it now — it will be hidden after you click "Copy key".', 'paperplane-mail-test-child' ); ?></p></div>
 		<?php elseif ( $result === 'new_key' ) : ?>
-			<div class="notice notice-info is-dismissible"><p><?php esc_html_e( 'A secret key has been generated automatically. Copy it and add this site to the main plugin.', 'paperplane-mail-test-child' ); ?></p></div>
+			<div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'A secret key has been generated automatically. Copy it now — it will be hidden after you click "Copy key".', 'paperplane-mail-test-child' ); ?></p></div>
 		<?php endif; ?>
 
 		<h2><?php esc_html_e( '1. Secret key', 'paperplane-mail-test-child' ); ?></h2>
@@ -290,23 +326,45 @@ function pp_mt_render_options() {
 				><?php esc_html_e( 'Regenerate key', 'paperplane-mail-test-child' ); ?></a>
 			</p>
 
+		<?php elseif ( ! $key_copied ) : ?>
+			<?php // ── dboption Fase 1: chiave non ancora copiata ── ?>
+			<div class="notice notice-error inline">
+				<p><strong><?php esc_html_e( 'Copy the key now.', 'paperplane-mail-test-child' ); ?></strong>
+				<?php esc_html_e( 'Clicking "Copy key" will permanently hide it. Make sure to paste it into the main plugin before proceeding — it cannot be recovered, only regenerated.', 'paperplane-mail-test-child' ); ?></p>
+			</div>
+			<p style="margin-top:12px">
+				<code id="pp-mt-key-val" style="font-size:1.1em;user-select:all"><?php echo esc_html( $display_secret ); ?></code>
+			</p>
+			<form method="post" id="pp-mt-copy-form" style="margin-top:8px">
+				<?php wp_nonce_field( 'pp_mt_mark_copied' ); ?>
+				<input type="hidden" name="pp_mt_action" value="mark_key_copied">
+				<button type="button" class="button button-primary" id="pp-mt-copy-btn">
+					<?php esc_html_e( 'Copy key', 'paperplane-mail-test-child' ); ?>
+				</button>
+			</form>
+			<p id="pp-mt-copy-error" style="display:none;color:#d63638;margin-top:8px">
+				<?php esc_html_e( 'Could not copy automatically. Copy the key manually from the field above, then click the button below.', 'paperplane-mail-test-child' ); ?>
+				<br><button type="button" class="button button-secondary" style="margin-top:6px" onclick="document.getElementById('pp-mt-copy-form').submit()">
+					<?php esc_html_e( 'I have copied the key', 'paperplane-mail-test-child' ); ?>
+				</button>
+			</p>
+
 		<?php else : ?>
+			<?php // ── dboption Fase 2: chiave copiata, nascosta definitivamente ── ?>
 			<div class="notice notice-success inline">
 				<p>&#10003; <?php esc_html_e( 'Key active — stored securely in the database.', 'paperplane-mail-test-child' ); ?></p>
 			</div>
-			<p style="margin-top:12px">
-				<span id="pp-mt-key-db" style="display:none"><code style="font-size:1.1em"><?php echo esc_html( $display_secret ); ?></code></span>
-				<button type="button" class="button button-secondary" id="pp-mt-reveal-btn" onclick="pp_mt_toggle_key()"><?php esc_html_e( 'Show key', 'paperplane-mail-test-child' ); ?></button>
-				<button type="button" class="button button-secondary" style="margin-left:4px" onclick="pp_mt_copy_text(<?php echo wp_json_encode( $display_secret ); ?>, this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
-			</p>
 			<p style="margin-top:12px">
 				<form method="post" style="display:inline">
 					<?php wp_nonce_field( 'pp_mt_regen_db' ); ?>
 					<input type="hidden" name="pp_mt_action" value="regen_db_secret">
 					<button type="submit" class="button button-secondary"
-						onclick="return confirm('<?php echo esc_js( __( 'Regenerate the secret key? The old key will stop working immediately — update the main plugin configuration with the new key.', 'paperplane-mail-test-child' ) ); ?>')"
-					><?php esc_html_e( 'Regenerate key', 'paperplane-mail-test-child' ); ?></button>
+						onclick="return confirm('<?php echo esc_js( __( 'Regenerate the secret key? The current key will stop working immediately — you will need to update the main plugin with the new key.', 'paperplane-mail-test-child' ) ); ?>')"
+					><?php esc_html_e( 'Generate new key', 'paperplane-mail-test-child' ); ?></button>
 				</form>
+			</p>
+			<p class="description" style="margin-top:4px">
+				<?php esc_html_e( 'Generating a new key will immediately invalidate the current one — update the main plugin configuration afterwards.', 'paperplane-mail-test-child' ); ?>
 			</p>
 
 		<?php endif; ?>
@@ -329,12 +387,18 @@ function pp_mt_render_options() {
 					<span style="color:#d63638;margin-left:8px">&#9888; <?php esc_html_e( 'Add the key to wp-config.php first', 'paperplane-mail-test-child' ); ?></span>
 				</td>
 			</tr>
-			<?php elseif ( $source === 'dboption' ) : ?>
+			<?php elseif ( $source === 'dboption' && ! $key_copied ) : ?>
 			<tr>
 				<th><?php esc_html_e( 'Secret key', 'paperplane-mail-test-child' ); ?></th>
 				<td>
-					<button type="button" class="button button-secondary" onclick="pp_mt_copy_text(<?php echo wp_json_encode( $display_secret ); ?>, this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
+					<code><?php echo esc_html( $display_secret ); ?></code>
+					<button type="button" class="button button-secondary" style="margin-left:8px" onclick="pp_mt_copy_text(<?php echo wp_json_encode( $display_secret ); ?>, this)"><?php esc_html_e( 'Copy', 'paperplane-mail-test-child' ); ?></button>
 				</td>
+			</tr>
+			<?php elseif ( $source === 'dboption' && $key_copied ) : ?>
+			<tr>
+				<th><?php esc_html_e( 'Secret key', 'paperplane-mail-test-child' ); ?></th>
+				<td><span style="color:#999"><?php esc_html_e( 'Hidden — generate a new key if you need to reconfigure.', 'paperplane-mail-test-child' ); ?></span></td>
 			</tr>
 			<?php endif; ?>
 		</table>
@@ -357,17 +421,20 @@ function pp_mt_render_options() {
 			setTimeout(function() { btn.textContent = orig; }, 2000);
 		});
 	}
-	function pp_mt_toggle_key() {
-		var el  = document.getElementById('pp-mt-key-db');
-		var btn = document.getElementById('pp-mt-reveal-btn');
-		if ( el.style.display === 'none' ) {
-			el.style.display = 'inline';
-			btn.textContent  = '<?php echo esc_js( __( 'Hide key', 'paperplane-mail-test-child' ) ); ?>';
-		} else {
-			el.style.display = 'none';
-			btn.textContent  = '<?php echo esc_js( __( 'Show key', 'paperplane-mail-test-child' ) ); ?>';
-		}
-	}
+	<?php if ( $source === 'dboption' && ! $key_copied ) : ?>
+	(function() {
+		var btn = document.getElementById('pp-mt-copy-btn');
+		if ( ! btn ) { return; }
+		btn.addEventListener('click', function() {
+			var key = document.getElementById('pp-mt-key-val').textContent.trim();
+			navigator.clipboard.writeText(key).then(function() {
+				document.getElementById('pp-mt-copy-form').submit();
+			}).catch(function() {
+				document.getElementById('pp-mt-copy-error').style.display = 'block';
+			});
+		});
+	})();
+	<?php endif; ?>
 	</script>
 	<?php
 }
