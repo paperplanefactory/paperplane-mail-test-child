@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.5
+Stable tag: 1.4.6
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,11 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.6 =
+* Security: rate limit sulle chiamate autenticate (max 100 per 5 min per IP) come protezione open relay
+* Security: rimosso `sanitize_text_field()` sul token in `pp_mt_auth()` prima di `hash_equals()` (non modificare il valore confrontato)
+* Nota documentata: rate limiting inefficace dietro reverse proxy (REMOTE_ADDR = IP del proxy)
 
 = 1.4.5 =
 * Aggiunta dichiarazione `args` in `register_rest_route` con `sanitize_callback` per `test_email` e `pp_check_token` (best practice WordPress REST API)

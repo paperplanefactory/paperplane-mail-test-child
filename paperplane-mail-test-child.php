@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.5
+ * Version: 1.4.6
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -156,7 +156,13 @@ function pp_mt_handle_actions() {
 define( 'PP_MT_RL_MAX',    20 );
 define( 'PP_MT_RL_WINDOW', 5 * MINUTE_IN_SECONDS );
 
+// Limite chiamate autenticate: protezione open relay se la secret viene compromessa.
+define( 'PP_MT_RL_RELAY_MAX',    100 );
+define( 'PP_MT_RL_RELAY_WINDOW', 5 * MINUTE_IN_SECONDS );
+
 function pp_mt_rl_key(): string {
+	// Nota: in ambienti con reverse proxy, REMOTE_ADDR è l'IP del proxy e tutti i client
+	// condividono lo stesso contatore. X-Forwarded-For non è usato perché falsificabile.
 	return 'pp_mt_rl_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' );
 }
 
@@ -172,6 +178,20 @@ function pp_mt_rl_record_failure(): void {
 
 function pp_mt_rl_reset(): void {
 	delete_transient( pp_mt_rl_key() );
+}
+
+function pp_mt_relay_key(): string {
+	return 'pp_mt_relay_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' );
+}
+
+function pp_mt_relay_is_blocked(): bool {
+	return (int) get_transient( pp_mt_relay_key() ) >= PP_MT_RL_RELAY_MAX;
+}
+
+function pp_mt_relay_record(): void {
+	$key   = pp_mt_relay_key();
+	$count = (int) get_transient( $key );
+	set_transient( $key, $count + 1, PP_MT_RL_RELAY_WINDOW );
 }
 
 // ─── REST endpoint ────────────────────────────────────────────────────────────
@@ -210,8 +230,9 @@ function pp_mt_auth( WP_REST_Request $request ) {
 		return false;
 	}
 
-	// Legge la chiave dal body POST (priorità) o dall'header Authorization
-	$token = sanitize_text_field( $request->get_param( 'pp_secret' ) ?? '' );
+	// Legge la chiave dal body POST (priorità) o dall'header Authorization.
+	// Nessun sanitizing prima di hash_equals(): il token è solo confrontato, non usato altrove.
+	$token = (string) ( $request->get_param( 'pp_secret' ) ?? '' );
 	if ( ! $token ) {
 		$auth = $request->get_header( 'authorization' );
 		if ( $auth && str_starts_with( $auth, 'Bearer ' ) ) {
@@ -222,6 +243,11 @@ function pp_mt_auth( WP_REST_Request $request ) {
 	$valid = hash_equals( $secret, $token );
 	if ( $valid ) {
 		pp_mt_rl_reset();
+		// Relay protection: limita le chiamate autenticate per impedire uso come open relay.
+		if ( pp_mt_relay_is_blocked() ) {
+			return false;
+		}
+		pp_mt_relay_record();
 	} else {
 		pp_mt_rl_record_failure();
 	}
