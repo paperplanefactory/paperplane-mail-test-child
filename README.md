@@ -38,7 +38,7 @@ Once the plugin is active, go to **Tools → PaperPlane Mail Test**. A secret ke
 
 ### 3. Add the site to the central monitor
 
-Go to **Settings → Mail Monitor** on the central site and add this site with its URL, secret key, and check frequency.
+Go to **Mail Monitor → Monitored Sites** on the central site and add this site with its URL, secret key, and check frequency.
 
 ---
 
@@ -49,6 +49,12 @@ Go to **Settings → Mail Monitor** on the central site and add this site with i
 3. If the result is KO, the monitor sends an alert email to the configured recipients
 
 Authentication uses a secret key generated automatically on first activation and stored encrypted (AES-256-CBC) in `wp_options`. On existing installations that already have a `PP_MAIL_TEST_SECRET` constant in `wp-config.php`, that constant takes priority and continues to work without changes.
+
+## What it does not check
+
+The endpoint verifies only that `wp_mail()` returns `true` — WordPress and its mailer accepted the message. An OK result does **not** mean the email reached the recipient's inbox.
+
+The plugin does **not** check email deliverability: actual delivery (inbox, bounce, spam), SPF / DKIM / DMARC records, MX and PTR / reverse DNS, IP or domain blacklists, or message spam score. Use dedicated tools such as [mail-tester.com](https://www.mail-tester.com), [MXToolbox](https://mxtoolbox.com) or [Google Postmaster Tools](https://postmaster.google.com) for those checks.
 
 ---
 

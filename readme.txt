@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.6
+Stable tag: 1.4.7
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,13 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.7 =
+* Security: `pp_secret` accettato solo come stringa (un array generava un PHP warning che esponeva il path del server)
+* Security: massimo 10 destinatari per chiamata in `test_email` (il relay limit conta le chiamate, non i destinatari)
+* Security: `pp_check_token` troncato a 32 caratteri
+* Security: la disinstallazione elimina anche i transient del plugin (chiave suggerita del flusso legacy, contatori rate limit)
+* README: aggiunta la sezione su cosa il plugin non verifica (deliverability, SPF/DKIM/DMARC…)
 
 = 1.4.6 =
 * Security: rate limit sulle chiamate autenticate (max 100 per 5 min per IP) come protezione open relay

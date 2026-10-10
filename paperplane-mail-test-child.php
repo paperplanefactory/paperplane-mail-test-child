@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.6
+ * Version: 1.4.7
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -160,6 +160,10 @@ define( 'PP_MT_RL_WINDOW', 5 * MINUTE_IN_SECONDS );
 define( 'PP_MT_RL_RELAY_MAX',    100 );
 define( 'PP_MT_RL_RELAY_WINDOW', 5 * MINUTE_IN_SECONDS );
 
+// Limiti input endpoint: il relay limit conta le chiamate, non i destinatari.
+define( 'PP_MT_MAX_RECIPIENTS', 10 );
+define( 'PP_MT_MAX_TOKEN_LEN',  32 );
+
 function pp_mt_rl_key(): string {
 	// Nota: in ambienti con reverse proxy, REMOTE_ADDR è l'IP del proxy e tutti i client
 	// condividono lo stesso contatore. X-Forwarded-For non è usato perché falsificabile.
@@ -212,7 +216,7 @@ add_action( 'rest_api_init', function () {
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => function ( $value ) {
-					return preg_replace( '/[^a-zA-Z0-9]/', '', (string) $value );
+					return substr( preg_replace( '/[^a-zA-Z0-9]/', '', (string) $value ), 0, PP_MT_MAX_TOKEN_LEN );
 				},
 				'description'       => 'Alphanumeric per-call token for traceability.',
 			),
@@ -232,7 +236,9 @@ function pp_mt_auth( WP_REST_Request $request ) {
 
 	// Legge la chiave dal body POST (priorità) o dall'header Authorization.
 	// Nessun sanitizing prima di hash_equals(): il token è solo confrontato, non usato altrove.
-	$token = (string) ( $request->get_param( 'pp_secret' ) ?? '' );
+	// is_string(): un array (pp_secret[]=…) genererebbe un warning che espone il path del server.
+	$param = $request->get_param( 'pp_secret' );
+	$token = is_string( $param ) ? $param : '';
 	if ( ! $token ) {
 		$auth = $request->get_header( 'authorization' );
 		if ( $auth && str_starts_with( $auth, 'Bearer ' ) ) {
@@ -272,6 +278,7 @@ function pp_mt_plus_token( string $email, string $token ): string {
 function pp_mt_handle_check( WP_REST_Request $request ) {
 	$raw        = $request->get_param( 'test_email' ) ?? '';
 	$recipients = array_filter( array_map( 'sanitize_email', array_map( 'trim', explode( ',', $raw ) ) ) );
+	$recipients = array_slice( array_unique( $recipients ), 0, PP_MT_MAX_RECIPIENTS );
 	if ( empty( $recipients ) ) {
 		$recipients = (array) get_option( 'admin_email' );
 	}
