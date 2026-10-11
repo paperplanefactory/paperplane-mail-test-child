@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.8
+Stable tag: 1.4.9
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,12 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.9 =
+* Pagina Strumenti: le sezioni "1. Secret key" e "2. Assistance site data" sono unite in un'unica sezione "Configurazione" (URL sito, chiave segreta)
+* Pagina Strumenti: la chiave compare una sola volta. Il secondo pulsante "Copia" della vecchia sezione 2 copiava la chiave senza segnarla come copiata, aggirando il flusso "copia una volta sola"; ora si copia solo con "Copia chiave"
+* Rimosso il supporto alla costante `PP_MAIL_TEST_SECRET` in `wp-config.php` e il relativo flusso di configurazione (chiave suggerita, "Verifica configurazione"): la chiave è solo quella cifrata nel database. Se la costante è ancora definita viene ignorata e un avviso in bacheca chiede di rimuoverla
+* Security: una chiave valida non viene più bloccata dal limite brute force. Chi condivide l'IP del main (stesso server, hosting condiviso, proxy/CDN) poteva bloccarlo con 20 chiavi errate, causando check KO e falsi alert
 
 = 1.4.8 =
 * Release: ogni release include `paperplane-mail-test-child.zip` (cartella a nome fisso `paperplane-mail-test-child/`), generato automaticamente da una GitHub Action

@@ -34,80 +34,17 @@ msgstr "PaperPlane Mail Test"
 msgid "This plugin exposes a REST endpoint that the PaperPlane assistance site can call to verify the mail function works correctly."
 msgstr "Questo plugin espone un endpoint REST che il sito assistenza PaperPlane può chiamare per verificare che la funzione mail funzioni correttamente."
 
-msgid "1. Secret key"
-msgstr "1. Chiave segreta"
-
-msgid "Key verified and active. The value will no longer be shown."
-msgstr "Chiave verificata e attiva. Il valore non verrà più mostrato."
-
-msgid "%s is not defined in %s. Add the line shown below and try again."
-msgstr "%s non è definita in %s. Aggiungi la riga mostrata qui sotto e riprova."
-
-msgid "The key does not match. Make sure you copied the value shown below exactly into %s."
-msgstr "La chiave non corrisponde. Assicurati di aver copiato esattamente il valore mostrato qui sotto in %s."
-
-msgid "Key active — %s is defined in %s."
-msgstr "Chiave attiva — %s è definita in %s."
-
-msgid "Copy this key now — it will no longer be shown after verification."
-msgstr "Copia questa chiave ora — non sarà più visibile dopo la verifica."
-
 msgid "Copy"
 msgstr "Copia"
 
 msgid "Copied!"
 msgstr "Copiato!"
 
-msgid "Add this line to %s before %s:"
-msgstr "Aggiungi questa riga in %s prima di %s:"
-
-msgid "Once you have added the line, click the button below to verify the configuration."
-msgstr "Dopo aver aggiunto la riga, clicca il pulsante qui sotto per verificare la configurazione."
-
-msgid "Verify configuration"
-msgstr "Verifica configurazione"
-
-msgid "Generate a different key"
-msgstr "Genera una chiave diversa"
-
-msgid "Generate a new key? The current key shown will be replaced."
-msgstr "Generare una nuova chiave? La chiave attualmente mostrata verrà sostituita."
-
-msgid "Regenerate key"
-msgstr "Rigenera chiave"
-
-msgid "Regenerate the secret key? You will need to update wp-config.php with the new value."
-msgstr "Rigenerare la chiave segreta? Dovrai aggiornare wp-config.php con il nuovo valore."
-
-msgid "2. Assistance site data"
-msgstr "2. Dati per il sito assistenza"
-
 msgid "Site URL"
 msgstr "URL sito"
 
-msgid "Secret key"
-msgstr "Chiave segreta"
-
-msgid "Add the key to wp-config.php first"
-msgstr "Aggiungi prima la chiave in wp-config.php"
-
-msgid "New key generated. Copy it and update the main plugin configuration."
-msgstr "Nuova chiave generata. Copiala e aggiorna la configurazione nel plugin principale."
-
-msgid "A secret key has been generated automatically. Copy it and add this site to the main plugin."
-msgstr "Una chiave segreta è stata generata automaticamente. Copiala e aggiungi questo sito al plugin principale."
-
 msgid "Key active — stored securely in the database."
 msgstr "Chiave attiva — salvata in modo sicuro nel database."
-
-msgid "Show key"
-msgstr "Mostra chiave"
-
-msgid "Hide key"
-msgstr "Nascondi chiave"
-
-msgid "Regenerate the secret key? The old key will stop working immediately — update the main plugin configuration with the new key."
-msgstr "Rigenerare la chiave segreta? La vecchia chiave smetterà di funzionare immediatamente — aggiorna la configurazione nel plugin principale con la nuova chiave."
 
 msgid "PaperPlane Mail Test:"
 msgstr "PaperPlane Mail Test:"
@@ -139,9 +76,6 @@ msgstr "Genera nuova chiave"
 msgid "Generating a new key will immediately invalidate the current one — update the main plugin configuration afterwards."
 msgstr "Generare una nuova chiave invaliderà immediatamente quella attuale — aggiorna la configurazione nel plugin principale dopo."
 
-msgid "Hidden — generate a new key if you need to reconfigure."
-msgstr "Nascosta — genera una nuova chiave se devi riconfigurare."
-
 msgid "Regenerate the secret key? The current key will stop working immediately — you will need to update the main plugin with the new key."
 msgstr "Rigenerare la chiave segreta? Quella attuale smetterà di funzionare immediatamente — aggiorna il plugin principale con la nuova chiave."
 
@@ -150,3 +84,19 @@ msgstr "Nuova chiave generata. Copiala ora — verrà nascosta dopo aver cliccat
 
 msgid "A secret key has been generated automatically. Copy it now — it will be hidden after you click \"Copy key\"."
 msgstr "Una chiave segreta è stata generata automaticamente. Copiala ora — verrà nascosta dopo aver cliccato \"Copia chiave\"."
+
+#. translators: 1: constant name, 2: wp-config.php, 3: link to the plugin page
+msgid "<strong>PaperPlane Mail Test:</strong> %1$s in %2$s is no longer used and can be removed. The secret key is now stored in the database — check it on the %3$s page."
+msgstr "<strong>PaperPlane Mail Test:</strong> %1$s in %2$s non è più usata e può essere rimossa. La chiave segreta ora è salvata nel database — verificala nella pagina %3$s."
+
+msgid "Configuration"
+msgstr "Configurazione"
+
+msgid "Complete the setup with \"Copy key\" to secure the key, then use these details on the main site."
+msgstr "Completa la procedura con \"Copia chiave\" per rendere sicura la chiave, poi usa questi dati sul sito main."
+
+msgid "Use these details on the main site."
+msgstr "Usa questi dati sul sito main."
+
+msgid "Secret key"
+msgstr "Chiave segreta"

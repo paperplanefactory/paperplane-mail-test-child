@@ -66,7 +66,7 @@ Go to **Mail Monitor → Monitored Sites** on the central site and add this site
 2. The plugin runs `wp_mail()` and returns `true` or `false`
 3. If the result is KO, the monitor sends an alert email to the configured recipients
 
-Authentication uses a secret key generated automatically on first activation and stored encrypted (AES-256-CBC) in `wp_options`. On existing installations that already have a `PP_MAIL_TEST_SECRET` constant in `wp-config.php`, that constant takes priority and continues to work without changes.
+Authentication uses a secret key generated automatically the first time you open **Tools → PaperPlane Mail Test**, stored encrypted (AES-256-CBC) in `wp_options`. The `PP_MAIL_TEST_SECRET` constant in `wp-config.php` is no longer supported (since 1.4.9): if it is still defined, the plugin ignores it and shows a notice asking to remove it.
 
 ## What it does not check
 
