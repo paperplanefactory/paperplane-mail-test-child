@@ -62,11 +62,13 @@ Go to **Mail Monitor → Monitored Sites** on the central site and add this site
 
 ## How it works
 
-1. The central monitor sends an authenticated `POST` request to `/wp-json/pp-mail-test/v1/check`
+1. The central monitor sends a signed `POST` request to `/wp-json/pp-mail-test/v1/check`
 2. The plugin runs `wp_mail()` and returns `true` or `false`
 3. If the result is KO, the monitor sends an alert email to the configured recipients
 
 Authentication uses a secret key generated automatically the first time you open **Tools → PaperPlane Mail Test**, stored encrypted (AES-256-CBC) in `wp_options`. The `PP_MAIL_TEST_SECRET` constant in `wp-config.php` is no longer supported (since 1.4.9): if it is still defined, the plugin ignores it and shows a notice asking to remove it.
+
+**Signed requests (since 1.4.11).** The central monitor (1.1.10 or later) no longer sends the key: each request carries a timestamp, a single-use nonce and an HMAC-SHA256 signature. The endpoint checks the signature, rejects timestamps older or newer than 5 minutes and nonces already used, so intercepted requests cannot be replayed. Requests with the key in clear (central monitor 1.1.9 or earlier) are still accepted during the transition and will be removed in a future release.
 
 ## Secret key rotation and WordPress salts
 

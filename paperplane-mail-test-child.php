@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.10
+ * Version: 1.4.11
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -138,6 +138,10 @@ define( 'PP_MT_RL_RELAY_WINDOW', 5 * MINUTE_IN_SECONDS );
 define( 'PP_MT_MAX_RECIPIENTS', 10 );
 define( 'PP_MT_MAX_TOKEN_LEN',  32 );
 
+// Richieste firmate (main ≥ 1.1.10): finestra di validità del timestamp. I nonce usati restano
+// memorizzati per il doppio della finestra, così una richiesta non può essere ripetuta.
+define( 'PP_MT_SIG_WINDOW', 5 * MINUTE_IN_SECONDS );
+
 function pp_mt_rl_key(): string {
 	// Nota: in ambienti con reverse proxy, REMOTE_ADDR è l'IP del proxy e tutti i client
 	// condividono lo stesso contatore. X-Forwarded-For non è usato perché falsificabile.
@@ -198,6 +202,48 @@ add_action( 'rest_api_init', function () {
 	) );
 } );
 
+/**
+ * Testo firmato con HMAC-SHA256: deve coincidere con pp_mm_signature_payload() del main.
+ */
+function pp_mt_signature_payload( string $ts, string $nonce, string $token, string $test_email ): string {
+	return implode( "\n", array( 'pp-mail-test-v1', $ts, $nonce, $token, $test_email ) );
+}
+
+/**
+ * Verifica una richiesta firmata. Restituisce '' se valida, altrimenti il codice del rifiuto:
+ * 'invalid' (firma assente o errata), 'clock' (timestamp fuori finestra), 'replay' (nonce già usato).
+ * La firma è verificata per prima: solo chi conosce la chiave riceve 'clock' o 'replay'.
+ */
+function pp_mt_verify_signed( string $secret, array $p ): string {
+	$ts         = $p['pp_ts'] ?? '';
+	$nonce      = $p['pp_nonce'] ?? '';
+	$sig        = $p['pp_sig'] ?? '';
+	$token      = $p['pp_check_token'] ?? '';
+	$test_email = $p['test_email'] ?? '';
+	foreach ( array( $ts, $nonce, $sig, $token, $test_email ) as $v ) {
+		if ( ! is_string( $v ) ) {
+			return 'invalid';
+		}
+	}
+	if ( ! ctype_digit( $ts ) || ! preg_match( '/^[A-Za-z0-9]{16,64}$/', $nonce ) ) {
+		return 'invalid';
+	}
+	$expected = hash_hmac( 'sha256', pp_mt_signature_payload( $ts, $nonce, $token, $test_email ), $secret );
+	if ( ! hash_equals( $expected, $sig ) ) {
+		return 'invalid';
+	}
+	if ( abs( time() - (int) $ts ) > PP_MT_SIG_WINDOW ) {
+		return 'clock';
+	}
+	// Nonce monouso, registrato solo dopo una firma valida (richieste non autentiche non riempiono la cache).
+	$key = 'pp_mt_nonce_' . md5( $nonce );
+	if ( get_transient( $key ) ) {
+		return 'replay';
+	}
+	set_transient( $key, 1, 2 * PP_MT_SIG_WINDOW );
+	return '';
+}
+
 function pp_mt_auth( WP_REST_Request $request ) {
 	$secret = pp_mt_get_secret();
 	if ( ! $secret ) {
@@ -209,22 +255,39 @@ function pp_mt_auth( WP_REST_Request $request ) {
 		return false;
 	}
 
-	// Legge la chiave dal body POST (priorità) o dall'header Authorization.
-	// Nessun sanitizing prima di hash_equals(): il token è solo confrontato, non usato altrove.
-	// is_string(): un array (pp_secret[]=…) genererebbe un warning che espone il path del server.
-	$param = $request->get_param( 'pp_secret' );
-	$token = is_string( $param ) ? $param : '';
-	if ( ! $token ) {
-		$auth = $request->get_header( 'authorization' );
-		if ( $auth && str_starts_with( $auth, 'Bearer ' ) ) {
-			$token = substr( $auth, 7 );
+	// Parametri grezzi (non sanitizzati): la firma è calcolata dal main sui valori inviati.
+	$params = $request->get_json_params() ?: $request->get_body_params();
+
+	if ( isset( $params['pp_sig'] ) ) {
+		// Richiesta firmata (main ≥ 1.1.10): la chiave non viaggia, la richiesta non è ripetibile.
+		$error = pp_mt_verify_signed( $secret, $params );
+		if ( $error === 'clock' ) {
+			return new WP_Error( 'pp_mt_clock_skew', 'Request timestamp out of range: check the server clocks.', array( 'status' => 401, 'server_time' => time() ) );
 		}
+		if ( $error === 'replay' ) {
+			return new WP_Error( 'pp_mt_replay', 'Request already received.', array( 'status' => 401 ) );
+		}
+		$valid = $error === '';
+	} else {
+		// Legacy (main ≤ 1.1.9): chiave in chiaro nel body o nell'header Authorization.
+		// Accettata solo per la transizione: da rimuovere quando tutti i main sono ≥ 1.1.10.
+		// Nessun sanitizing prima di hash_equals(): il token è solo confrontato, non usato altrove.
+		// is_string(): un array (pp_secret[]=…) genererebbe un warning che espone il path del server.
+		$param = $request->get_param( 'pp_secret' );
+		$token = is_string( $param ) ? $param : '';
+		if ( ! $token ) {
+			$auth = $request->get_header( 'authorization' );
+			if ( $auth && str_starts_with( $auth, 'Bearer ' ) ) {
+				$token = substr( $auth, 7 );
+			}
+		}
+		$valid = $token !== '' && hash_equals( $secret, $token );
 	}
 
-	// Una chiave valida passa sempre il blocco brute force: il contatore è per IP e chi condivide
+	// Una richiesta valida passa sempre il blocco brute force: il contatore è per IP e chi condivide
 	// l'IP del main (stesso server, hosting condiviso, proxy/CDN) potrebbe altrimenti bloccarlo
-	// con 20 chiavi errate. La chiave (32 caratteri alfanumerici, ~190 bit) non è indovinabile per tentativi.
-	if ( hash_equals( $secret, $token ) ) {
+	// con 20 tentativi errati. La chiave (32 caratteri alfanumerici, ~190 bit) non è indovinabile per tentativi.
+	if ( $valid ) {
 		pp_mt_rl_reset();
 		// Relay protection: limita le chiamate autenticate per impedire uso come open relay.
 		if ( pp_mt_relay_is_blocked() ) {
