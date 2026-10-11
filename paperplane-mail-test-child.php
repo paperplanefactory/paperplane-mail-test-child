@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.11
+ * Version: 1.4.12
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -258,31 +258,16 @@ function pp_mt_auth( WP_REST_Request $request ) {
 	// Parametri grezzi (non sanitizzati): la firma è calcolata dal main sui valori inviati.
 	$params = $request->get_json_params() ?: $request->get_body_params();
 
-	if ( isset( $params['pp_sig'] ) ) {
-		// Richiesta firmata (main ≥ 1.1.10): la chiave non viaggia, la richiesta non è ripetibile.
-		$error = pp_mt_verify_signed( $secret, $params );
-		if ( $error === 'clock' ) {
-			return new WP_Error( 'pp_mt_clock_skew', 'Request timestamp out of range: check the server clocks.', array( 'status' => 401, 'server_time' => time() ) );
-		}
-		if ( $error === 'replay' ) {
-			return new WP_Error( 'pp_mt_replay', 'Request already received.', array( 'status' => 401 ) );
-		}
-		$valid = $error === '';
-	} else {
-		// Legacy (main ≤ 1.1.9): chiave in chiaro nel body o nell'header Authorization.
-		// Accettata solo per la transizione: da rimuovere quando tutti i main sono ≥ 1.1.10.
-		// Nessun sanitizing prima di hash_equals(): il token è solo confrontato, non usato altrove.
-		// is_string(): un array (pp_secret[]=…) genererebbe un warning che espone il path del server.
-		$param = $request->get_param( 'pp_secret' );
-		$token = is_string( $param ) ? $param : '';
-		if ( ! $token ) {
-			$auth = $request->get_header( 'authorization' );
-			if ( $auth && str_starts_with( $auth, 'Bearer ' ) ) {
-				$token = substr( $auth, 7 );
-			}
-		}
-		$valid = $token !== '' && hash_equals( $secret, $token );
+	// Solo richieste firmate (main ≥ 1.1.10): la chiave non viaggia, la richiesta non è ripetibile.
+	// Il vecchio formato con la chiave in chiaro (pp_secret / Authorization: Bearer) non è più accettato.
+	$error = pp_mt_verify_signed( $secret, is_array( $params ) ? $params : array() );
+	if ( $error === 'clock' ) {
+		return new WP_Error( 'pp_mt_clock_skew', 'Request timestamp out of range: check the server clocks.', array( 'status' => 401, 'server_time' => time() ) );
 	}
+	if ( $error === 'replay' ) {
+		return new WP_Error( 'pp_mt_replay', 'Request already received.', array( 'status' => 401 ) );
+	}
+	$valid = $error === '';
 
 	// Una richiesta valida passa sempre il blocco brute force: il contatore è per IP e chi condivide
 	// l'IP del main (stesso server, hosting condiviso, proxy/CDN) potrebbe altrimenti bloccarlo

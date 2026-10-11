@@ -68,7 +68,7 @@ Go to **Mail Monitor → Monitored Sites** on the central site and add this site
 
 Authentication uses a secret key generated automatically the first time you open **Tools → PaperPlane Mail Test**, stored encrypted (AES-256-CBC) in `wp_options`. The `PP_MAIL_TEST_SECRET` constant in `wp-config.php` is no longer supported (since 1.4.9): if it is still defined, the plugin ignores it and shows a notice asking to remove it.
 
-**Signed requests (since 1.4.11).** The central monitor (1.1.10 or later) no longer sends the key: each request carries a timestamp, a single-use nonce and an HMAC-SHA256 signature. The endpoint checks the signature, rejects timestamps older or newer than 5 minutes and nonces already used, so intercepted requests cannot be replayed. Requests with the key in clear (central monitor 1.1.9 or earlier) are still accepted during the transition and will be removed in a future release.
+**Signed requests (since 1.4.11).** The central monitor (1.1.10 or later) no longer sends the key: each request carries a timestamp, a single-use nonce and an HMAC-SHA256 signature. The endpoint checks the signature, rejects timestamps older or newer than 5 minutes and nonces already used, so intercepted requests cannot be replayed. Since 1.4.12, requests with the key in clear (central monitor 1.1.9 or earlier) are no longer accepted: the central monitor must be 1.1.10 or later.
 
 ## Secret key rotation and WordPress salts
 
