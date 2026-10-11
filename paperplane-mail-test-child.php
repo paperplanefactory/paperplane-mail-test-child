@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.9
+ * Version: 1.4.10
  * Author: Paper Plane Factory
  * Text Domain: paperplane-mail-test-child
  * Domain Path: /languages
@@ -88,6 +88,13 @@ function pp_mt_get_secret(): string {
 		return pp_mt_decrypt_secret( $stored );
 	}
 	return '';
+}
+
+// Chiave salvata ma non più decifrabile: le chiavi di sicurezza di WordPress (AUTH_KEY) sono
+// cambiate dopo la generazione (es. rigenerazione dei salt). Serve una nuova chiave.
+function pp_mt_key_unreadable(): bool {
+	$stored = get_option( PP_MT_OPTION_SECRET, '' );
+	return $stored !== '' && pp_mt_decrypt_secret( $stored ) === '';
 }
 
 // ─── Azioni admin ────────────────────────────────────────────────────────────
@@ -194,6 +201,11 @@ add_action( 'rest_api_init', function () {
 function pp_mt_auth( WP_REST_Request $request ) {
 	$secret = pp_mt_get_secret();
 	if ( ! $secret ) {
+		// Errore esplicito così il main mostra la causa reale invece di un generico 401.
+		// Rivela solo che la configurazione del plugin è da rifare, nessun dato sulla chiave.
+		if ( pp_mt_key_unreadable() ) {
+			return new WP_Error( 'pp_mt_key_unreadable', 'Secret key cannot be decrypted: generate a new key.', array( 'status' => 500 ) );
+		}
 		return false;
 	}
 
@@ -299,7 +311,17 @@ add_action( 'admin_notices', function () {
 		echo '</p></div>';
 	}
 
-	if ( get_option( PP_MT_OPTION_SECRET, '' ) && ! get_option( PP_MT_OPTION_COPIED, 0 ) ) {
+	if ( pp_mt_key_unreadable() ) {
+		echo '<div class="notice notice-error"><p>';
+		printf(
+			'<strong>%s</strong> %s <a href="%s">%s</a>',
+			esc_html__( 'PaperPlane Mail Test:', 'paperplane-mail-test-child' ),
+			esc_html__( 'the secret key can no longer be read (the WordPress security keys have changed). Mail checks are failing.', 'paperplane-mail-test-child' ),
+			esc_url( admin_url( 'tools.php?page=pp-mail-test' ) ),
+			esc_html__( 'Generate a new key →', 'paperplane-mail-test-child' )
+		);
+		echo '</p></div>';
+	} elseif ( get_option( PP_MT_OPTION_SECRET, '' ) && ! get_option( PP_MT_OPTION_COPIED, 0 ) ) {
 		$url = admin_url( 'tools.php?page=pp-mail-test' );
 		echo '<div class="notice notice-error"><p>';
 		printf(
@@ -340,6 +362,7 @@ function pp_mt_render_options() {
 	}
 
 	$key_copied = (bool) get_option( PP_MT_OPTION_COPIED, 0 );
+	$unreadable = $stored_enc && $display_secret === '';
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ); ?></h1>
@@ -367,7 +390,19 @@ function pp_mt_render_options() {
 		</p>
 
 		<h3><?php esc_html_e( 'Secret key', 'paperplane-mail-test-child' ); ?></h3>
-		<?php if ( ! $key_copied ) : ?>
+		<?php if ( $unreadable ) : ?>
+			<?php // ── Chiave non più decifrabile (salt WordPress cambiati) ── ?>
+			<div class="notice notice-error inline">
+				<p><strong><?php esc_html_e( 'The saved key can no longer be read.', 'paperplane-mail-test-child' ); ?></strong>
+				<?php esc_html_e( 'The WordPress security keys of this site have changed since the key was generated, so mail checks are failing. Generate a new key, then update it on the main site.', 'paperplane-mail-test-child' ); ?></p>
+			</div>
+			<form method="post" style="margin-top:12px">
+				<?php wp_nonce_field( 'pp_mt_regen_db' ); ?>
+				<input type="hidden" name="pp_mt_action" value="regen_db_secret">
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Generate new key', 'paperplane-mail-test-child' ); ?></button>
+			</form>
+
+		<?php elseif ( ! $key_copied ) : ?>
 			<?php // ── Fase 1: chiave non ancora copiata ── ?>
 			<div class="notice notice-error inline">
 				<p><strong><?php esc_html_e( 'Copy the key now.', 'paperplane-mail-test-child' ); ?></strong>

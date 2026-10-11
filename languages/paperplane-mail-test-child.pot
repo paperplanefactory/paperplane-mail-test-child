@@ -63,3 +63,66 @@ msgstr ""
 
 msgid "Secret key"
 msgstr ""
+
+msgid "A secret key has been generated automatically. Copy it now — it will be hidden after you click \"Copy key\"."
+msgstr ""
+
+msgid "Clicking \"Copy key\" will permanently hide it. Make sure to paste it into the main plugin before proceeding — it cannot be recovered, only regenerated."
+msgstr ""
+
+msgid "Copied!"
+msgstr ""
+
+msgid "Copy it now →"
+msgstr ""
+
+msgid "Copy key"
+msgstr ""
+
+msgid "Copy the key now."
+msgstr ""
+
+msgid "Could not copy automatically. Copy the key manually from the field above, then click the button below."
+msgstr ""
+
+msgid "Generate a new key →"
+msgstr ""
+
+msgid "Generate new key"
+msgstr ""
+
+msgid "Generating a new key will immediately invalidate the current one — update the main plugin configuration afterwards."
+msgstr ""
+
+msgid "I have copied the key"
+msgstr ""
+
+msgid "Key active — stored securely in the database."
+msgstr ""
+
+msgid "New key generated. Copy it now — it will be hidden after you click \"Copy key\"."
+msgstr ""
+
+msgid "PaperPlane Mail Test:"
+msgstr ""
+
+msgid "Regenerate the secret key? The current key will stop working immediately — you will need to update the main plugin with the new key."
+msgstr ""
+
+msgid "The WordPress security keys of this site have changed since the key was generated, so mail checks are failing. Generate a new key, then update it on the main site."
+msgstr ""
+
+msgid "The saved key can no longer be read."
+msgstr ""
+
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+msgid "[PaperPlane Mail Test child site] %s — %s"
+msgstr ""
+
+msgid "the secret key can no longer be read (the WordPress security keys have changed). Mail checks are failing."
+msgstr ""
+
+msgid "the secret key has not been copied yet."
+msgstr ""

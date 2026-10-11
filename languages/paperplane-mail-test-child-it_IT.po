@@ -100,3 +100,15 @@ msgstr "Usa questi dati sul sito main."
 
 msgid "Secret key"
 msgstr "Chiave segreta"
+
+msgid "Generate a new key →"
+msgstr "Genera una nuova chiave →"
+
+msgid "The WordPress security keys of this site have changed since the key was generated, so mail checks are failing. Generate a new key, then update it on the main site."
+msgstr "Le chiavi di sicurezza di WordPress di questo sito sono cambiate dopo la generazione della chiave, quindi i check delle mail stanno fallendo. Genera una nuova chiave, poi aggiornala sul sito main."
+
+msgid "The saved key can no longer be read."
+msgstr "La chiave salvata non è più leggibile."
+
+msgid "the secret key can no longer be read (the WordPress security keys have changed). Mail checks are failing."
+msgstr "la chiave segreta non è più leggibile (le chiavi di sicurezza di WordPress sono cambiate). I check delle mail stanno fallendo."

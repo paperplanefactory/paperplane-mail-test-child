@@ -68,6 +68,11 @@ Go to **Mail Monitor → Monitored Sites** on the central site and add this site
 
 Authentication uses a secret key generated automatically the first time you open **Tools → PaperPlane Mail Test**, stored encrypted (AES-256-CBC) in `wp_options`. The `PP_MAIL_TEST_SECRET` constant in `wp-config.php` is no longer supported (since 1.4.9): if it is still defined, the plugin ignores it and shows a notice asking to remove it.
 
+## Secret key rotation and WordPress salts
+
+- **Rotation:** **Tools → PaperPlane Mail Test → Generate new key**, then update the key on the central monitor (**Edit → New secret key → Save and verify**). The old key stops working immediately.
+- **WordPress security keys (salts):** the secret key is stored encrypted with a key derived from `AUTH_KEY`. If the salts are regenerated, the stored key can no longer be decrypted: the plugin shows an error on its page and in the dashboard, and the endpoint tells the central monitor so it can show the real cause. Generate a new key and update it on the central monitor.
+
 ## What it does not check
 
 The endpoint verifies only that `wp_mail()` returns `true` — WordPress and its mailer accepted the message. An OK result does **not** mean the email reached the recipient's inbox.

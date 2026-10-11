@@ -2,7 +2,7 @@
 Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 6.7
-Stable tag: 1.4.9
+Stable tag: 1.4.10
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -14,6 +14,10 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.10 =
+* Chiavi di sicurezza WordPress cambiate: se la chiave salvata non è più decifrabile, la pagina Strumenti e la bacheca mostrano un errore con il pulsante "Genera nuova chiave", e l'endpoint risponde `pp_mt_key_unreadable` (HTTP 500) così il main mostra la causa reale
+* README: rotazione della chiave e salt WordPress
 
 = 1.4.9 =
 * Pagina Strumenti: le sezioni "1. Secret key" e "2. Assistance site data" sono unite in un'unica sezione "Configurazione" (URL sito, chiave segreta)
