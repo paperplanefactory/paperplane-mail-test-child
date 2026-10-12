@@ -1,7 +1,8 @@
 === PaperPlane Mail Test Child ===
 Contributors: paperplanefactory
 Requires at least: 5.9
-Tested up to: 6.7
+Tested up to: 7.1
+Requires PHP: 8.0
 Stable tag: 1.4.12
 License: GPLv2 or later
 
