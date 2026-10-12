@@ -3,7 +3,7 @@ Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.4.13
+Stable tag: 1.4.14
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -15,6 +15,11 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.14 =
+* Nuovo avviso in tutto wp-admin "la configurazione non è completa" finché la chiave segreta non è stata generata e salvata nel database: prima, subito dopo l'attivazione, nessun messaggio invitava ad aprire la pagina del plugin
+* La chiave viene generata al caricamento della pagina del plugin, prima degli avvisi; una chiave appena generata viene sempre mostrata
+* Nella pagina del plugin non vengono ripetuti gli avvisi sullo stato della chiave, già spiegati dalla pagina stessa
 
 = 1.4.13 =
 * Accessibilità WCAG 2.2 AA (verificata con axe-core, 0 violazioni): messaggio di copia non riuscita e "Copied!" annunciati agli screen reader, chiave in un campo di sola lettura selezionabile da tastiera, contrasto del testo di errore
