@@ -361,7 +361,26 @@ add_action( 'admin_notices', function () {
 		echo '</p></div>';
 	}
 
-	if ( pp_mt_key_unreadable() ) {
+	// Nella pagina del plugin gli avvisi sullo stato della chiave sono superflui: la pagina stessa
+	// mostra la chiave e cosa fare (eviterebbe tre messaggi uguali alla prima apertura).
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( $screen && $screen->id === 'tools_page_pp-mail-test' ) {
+		return;
+	}
+
+	if ( ! get_option( PP_MT_OPTION_SECRET, '' ) ) {
+		// Plugin attivato ma chiave non ancora generata: senza questo avviso nulla invita
+		// ad aprire la pagina del plugin, e il sito resterebbe non configurato.
+		echo '<div class="notice notice-error"><p>';
+		printf(
+			'<strong>%s</strong> %s <a href="%s">%s</a>',
+			esc_html__( 'PaperPlane Mail Test:', 'paperplane-mail-test-child' ),
+			esc_html__( 'the setup is not complete.', 'paperplane-mail-test-child' ),
+			esc_url( admin_url( 'tools.php?page=pp-mail-test' ) ),
+			esc_html__( 'Open the plugin page to generate the secret key →', 'paperplane-mail-test-child' )
+		);
+		echo '</p></div>';
+	} elseif ( pp_mt_key_unreadable() ) {
 		echo '<div class="notice notice-error"><p>';
 		printf(
 			'<strong>%s</strong> %s <a href="%s">%s</a>',
@@ -386,29 +405,47 @@ add_action( 'admin_notices', function () {
 } );
 
 add_action( 'admin_menu', function () {
-	add_management_page(
+	$hook = add_management_page(
 		__( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ),
 		__( 'PaperPlane Mail Test', 'paperplane-mail-test-child' ),
 		'manage_options',
 		'pp-mail-test',
 		'pp_mt_render_options'
 	);
+	// La chiave viene generata al caricamento della pagina, prima degli avvisi in bacheca:
+	// così alla prima apertura non compare "configurazione non completa" insieme a "chiave generata".
+	add_action( 'load-' . $hook, 'pp_mt_maybe_generate_secret' );
 } );
+
+function pp_mt_maybe_generate_secret() {
+	if ( ! current_user_can( 'manage_options' ) || get_option( PP_MT_OPTION_SECRET, '' ) ) {
+		return;
+	}
+	pp_mt_generate_and_save_secret();
+	// Una chiave nuova va sempre mostrata: se era rimasto "copiata" verrebbe nascosta senza essere mai vista.
+	update_option( PP_MT_OPTION_COPIED, 0 );
+	$GLOBALS['pp_mt_key_just_generated'] = true;
+}
 
 function pp_mt_render_options() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'paperplane-mail-test-child' ) );
 	}
 
-	$result     = sanitize_key( $_GET['pp_mt_result'] ?? '' );
+	$result = sanitize_key( $_GET['pp_mt_result'] ?? '' );
+	// Prima installazione: chiave appena generata da pp_mt_maybe_generate_secret().
+	if ( ! empty( $GLOBALS['pp_mt_key_just_generated'] ) ) {
+		$result = 'new_key';
+	}
 	$stored_enc = get_option( PP_MT_OPTION_SECRET, '' );
-
 	if ( $stored_enc ) {
 		$display_secret = pp_mt_decrypt_secret( $stored_enc );
 	} else {
-		// Prima installazione o nessuna chiave — genera automaticamente
+		// Rete di sicurezza se l'hook di caricamento non è partito.
 		$display_secret = pp_mt_generate_and_save_secret();
+		$stored_enc     = get_option( PP_MT_OPTION_SECRET, '' );
 		$result         = 'new_key';
+		update_option( PP_MT_OPTION_COPIED, 0 );
 	}
 
 	$key_copied = (bool) get_option( PP_MT_OPTION_COPIED, 0 );

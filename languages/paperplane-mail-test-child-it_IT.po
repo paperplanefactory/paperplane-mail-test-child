@@ -112,3 +112,9 @@ msgstr "La chiave salvata non è più leggibile."
 
 msgid "the secret key can no longer be read (the WordPress security keys have changed). Mail checks are failing."
 msgstr "la chiave segreta non è più leggibile (le chiavi di sicurezza di WordPress sono cambiate). I check delle mail stanno fallendo."
+
+msgid "Open the plugin page to generate the secret key →"
+msgstr "Apri la pagina del plugin per generare la chiave segreta →"
+
+msgid "the setup is not complete."
+msgstr "la configurazione non è completa."

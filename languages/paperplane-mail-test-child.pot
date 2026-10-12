@@ -126,3 +126,9 @@ msgstr ""
 
 msgid "the secret key has not been copied yet."
 msgstr ""
+
+msgid "Open the plugin page to generate the secret key →"
+msgstr ""
+
+msgid "the setup is not complete."
+msgstr ""
