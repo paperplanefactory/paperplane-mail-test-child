@@ -5,6 +5,7 @@ Tested up to: 7.1
 Requires PHP: 8.0
 Stable tag: 1.4.14
 License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
 
