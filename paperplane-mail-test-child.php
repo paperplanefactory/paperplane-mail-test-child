@@ -459,7 +459,8 @@ function pp_mt_render_options() {
 				<?php esc_html_e( 'Clicking "Copy key" will permanently hide it. Make sure to paste it into the main plugin before proceeding — it cannot be recovered, only regenerated.', 'paperplane-mail-test-child' ); ?></p>
 			</div>
 			<p style="margin-top:12px">
-				<code id="pp-mt-key-val" style="font-size:1.1em;user-select:all"><?php echo esc_html( $display_secret ); ?></code>
+				<?php // Campo di sola lettura: selezionabile anche da tastiera (Tab + Ctrl/Cmd+A) se la copia automatica non funziona. ?>
+				<input type="text" id="pp-mt-key-val" class="regular-text code" readonly value="<?php echo esc_attr( $display_secret ); ?>" aria-label="<?php esc_attr_e( 'Secret key', 'paperplane-mail-test-child' ); ?>" onfocus="this.select()" style="font-size:1.1em">
 			</p>
 			<form method="post" id="pp-mt-copy-form" style="margin-top:8px">
 				<?php wp_nonce_field( 'pp_mt_mark_copied' ); ?>
@@ -468,7 +469,7 @@ function pp_mt_render_options() {
 					<?php esc_html_e( 'Copy key', 'paperplane-mail-test-child' ); ?>
 				</button>
 			</form>
-			<p id="pp-mt-copy-error" style="display:none;color:#d63638;margin-top:8px">
+			<p id="pp-mt-copy-error" role="alert" style="display:none;color:#b32d2e;margin-top:8px">
 				<?php esc_html_e( 'Could not copy automatically. Copy the key manually from the field above, then click the button below.', 'paperplane-mail-test-child' ); ?>
 				<br><button type="button" class="button button-secondary" style="margin-top:6px" onclick="document.getElementById('pp-mt-copy-form').submit()">
 					<?php esc_html_e( 'I have copied the key', 'paperplane-mail-test-child' ); ?>
@@ -494,13 +495,16 @@ function pp_mt_render_options() {
 
 	</div>
 
+	<?php // Annunci per screen reader (WCAG 4.1.3): "Copied!" cambia solo il testo del pulsante. ?>
+	<p id="pp-mt-live" class="screen-reader-text" aria-live="polite"></p>
 	<script>
 	function pp_mt_copy(id, btn) {
 		var text = document.getElementById(id).textContent;
 		navigator.clipboard.writeText(text).then(function() {
 			var orig = btn.textContent;
 			btn.textContent = '<?php echo esc_js( __( 'Copied!', 'paperplane-mail-test-child' ) ); ?>';
-			setTimeout(function() { btn.textContent = orig; }, 2000);
+			document.getElementById('pp-mt-live').textContent = '<?php echo esc_js( __( 'Copied!', 'paperplane-mail-test-child' ) ); ?>';
+			setTimeout(function() { btn.textContent = orig; document.getElementById('pp-mt-live').textContent = ''; }, 2000);
 		});
 	}
 	<?php if ( ! $key_copied ) : ?>
@@ -508,7 +512,7 @@ function pp_mt_render_options() {
 		var btn = document.getElementById('pp-mt-copy-btn');
 		if ( ! btn ) { return; }
 		btn.addEventListener('click', function() {
-			var key = document.getElementById('pp-mt-key-val').textContent.trim();
+			var key = document.getElementById('pp-mt-key-val').value.trim();
 			navigator.clipboard.writeText(key).then(function() {
 				document.getElementById('pp-mt-copy-form').submit();
 			}).catch(function() {
