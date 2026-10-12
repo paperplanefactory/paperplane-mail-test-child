@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.12
+ * Version: 1.4.13
  * Requires at least: 5.9
  * Requires PHP: 8.0
  * Author: Paper Plane Factory

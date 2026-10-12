@@ -3,7 +3,7 @@ Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.4.12
+Stable tag: 1.4.13
 License: GPLv2 or later
 
 Exposes a REST endpoint for automated mail function testing. Install on each site to monitor.
@@ -15,6 +15,10 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.13 =
+* Accessibilità WCAG 2.2 AA (verificata con axe-core, 0 violazioni): messaggio di copia non riuscita e "Copied!" annunciati agli screen reader, chiave in un campo di sola lettura selezionabile da tastiera, contrasto del testo di errore
+* Compatibilità: Tested up to 7.1, Requires PHP 8.0 (anche nell'header del plugin)
 
 = 1.4.12 =
 * Security: rimosso il vecchio formato con la chiave in chiaro (`pp_secret` nel body o `Authorization: Bearer`). Sono accettate solo le richieste firmate del main 1.1.10 o successivo, quindi una richiesta intercettata in passato non è più riutilizzabile
