@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.14
+ * Version: 1.4.15
  * Requires at least: 5.9
  * Requires PHP: 8.0
  * Author: Paper Plane Factory
@@ -256,7 +256,7 @@ function pp_mt_auth( WP_REST_Request $request ) {
 		if ( pp_mt_key_unreadable() ) {
 			return new WP_Error( 'pp_mt_key_unreadable', 'Secret key cannot be decrypted: generate a new key.', array( 'status' => 500 ) );
 		}
-		return false;
+		return new WP_Error( 'pp_mt_not_configured', 'No secret key yet: open Tools > PaperPlane Mail Test on this site.', array( 'status' => 401 ) );
 	}
 
 	// Parametri grezzi (non sanitizzati): la firma è calcolata dal main sui valori inviati.
@@ -279,8 +279,9 @@ function pp_mt_auth( WP_REST_Request $request ) {
 	if ( $valid ) {
 		pp_mt_rl_reset();
 		// Relay protection: limita le chiamate autenticate per impedire uso come open relay.
+		// Codice distinto: lo riceve solo chi ha firmato con la chiave giusta.
 		if ( pp_mt_relay_is_blocked() ) {
-			return false;
+			return new WP_Error( 'pp_mt_rate_limited', 'Too many checks in a short time: try again in a few minutes.', array( 'status' => 429 ) );
 		}
 		pp_mt_relay_record();
 		return true;
@@ -289,7 +290,10 @@ function pp_mt_auth( WP_REST_Request $request ) {
 	if ( ! pp_mt_rl_is_blocked() ) {
 		pp_mt_rl_record_failure();
 	}
-	return false;
+	// Codice proprio del child (non il generico rest_forbidden): il main distingue così una chiave
+	// errata da un blocco della REST API fatto dal tema o da un altro plugin. Stessa risposta per
+	// firma errata e IP bloccato, quindi chi tenta non sa se è stato bloccato.
+	return new WP_Error( 'pp_mt_unauthorized', 'Authentication failed: wrong secret key or too many failed attempts.', array( 'status' => 401 ) );
 }
 
 function pp_mt_plus_token( string $email, string $token ): string {
@@ -330,14 +334,29 @@ function pp_mt_handle_check( WP_REST_Request $request ) {
 
 	$subject = sprintf( __( '[PaperPlane Mail Test child site] %s — %s', 'paperplane-mail-test-child' ), get_bloginfo( 'name' ), date_i18n( 'd/m/Y H:i' ) );
 	$body    = sprintf( __( 'Automatic mail function test from %s.', 'paperplane-mail-test-child' ), home_url() );
-	$result  = wp_mail( $recipients, $subject, $body, $headers );
 
-	return new WP_REST_Response( array(
+	// Errore reale dell'invio (es. "SMTP Error: Could not authenticate."), restituito al main
+	// insieme all'esito: è la causa da mostrare nel KO. Lo riceve solo una richiesta firmata.
+	$mail_error = '';
+	$capture    = function ( $error ) use ( &$mail_error ) {
+		if ( is_wp_error( $error ) ) {
+			$mail_error = $error->get_error_message();
+		}
+	};
+	add_action( 'wp_mail_failed', $capture );
+	$result = wp_mail( $recipients, $subject, $body, $headers );
+	remove_action( 'wp_mail_failed', $capture );
+
+	$response = array(
 		'success' => $result,
 		'message' => $result ? __( 'Mail sent successfully.', 'paperplane-mail-test-child' ) : __( 'wp_mail() returned false.', 'paperplane-mail-test-child' ),
 		'site'    => home_url(),
 		'time'    => current_time( 'mysql' ),
-	), 200 );
+	);
+	if ( ! $result && $mail_error !== '' ) {
+		$response['error'] = mb_substr( trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $mail_error ) ) ), 0, 300 );
+	}
+	return new WP_REST_Response( $response, 200 );
 }
 
 // ─── Pagina opzioni ───────────────────────────────────────────────────────────

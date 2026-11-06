@@ -3,7 +3,7 @@ Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.4.14
+Stable tag: 1.4.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,6 +16,10 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.15 =
+* Errori con un codice proprio del child, così la dashboard (main 1.3.0 o successivo) mostra la causa esatta: chiave errata (`pp_mt_unauthorized`), chiave non ancora generata (`pp_mt_not_configured`), troppe verifiche in poco tempo (`pp_mt_rate_limited`, HTTP 429). Prima tutti questi casi davano il generico `rest_forbidden` di WordPress, uguale a quello di un tema o plugin che blocca la REST API
+* Se l'invio della mail di test fallisce, la risposta contiene anche l'errore reale di WordPress (per esempio "SMTP Error: Could not authenticate."), mostrato dalla dashboard come dettaglio del KO
 
 = 1.4.14 =
 * Nuovo avviso in tutto wp-admin "la configurazione non è completa" finché la chiave segreta non è stata generata e salvata nel database: prima, subito dopo l'attivazione, nessun messaggio invitava ad aprire la pagina del plugin
