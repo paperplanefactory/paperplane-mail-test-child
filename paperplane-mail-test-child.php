@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PaperPlane Mail Test Child
  * Description: Exposes a REST endpoint for mail function testing. Install on each monitored site.
- * Version: 1.4.15
+ * Version: 1.4.16
  * Requires at least: 5.9
  * Requires PHP: 8.0
  * Author: Paper Plane Factory
@@ -135,7 +135,10 @@ define( 'PP_MT_RL_MAX',    20 );
 define( 'PP_MT_RL_WINDOW', 5 * MINUTE_IN_SECONDS );
 
 // Limite chiamate autenticate: protezione open relay se la secret viene compromessa.
-define( 'PP_MT_RL_RELAY_MAX',    100 );
+// Contatore unico per sito (non per IP): chi avesse la chiave non può aggirarlo usando molti IP.
+// L'unico chiamante legittimo è il main, che controlla ogni sito al massimo ogni 10-15 minuti
+// più qualche verifica manuale: 20 chiamate ogni 5 minuti bastano e avanzano.
+define( 'PP_MT_RL_RELAY_MAX',    20 );
 define( 'PP_MT_RL_RELAY_WINDOW', 5 * MINUTE_IN_SECONDS );
 
 // Limiti input endpoint: il relay limit conta le chiamate, non i destinatari.
@@ -167,7 +170,7 @@ function pp_mt_rl_reset(): void {
 }
 
 function pp_mt_relay_key(): string {
-	return 'pp_mt_relay_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' );
+	return 'pp_mt_relay';
 }
 
 function pp_mt_relay_is_blocked(): bool {

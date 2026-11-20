@@ -3,7 +3,7 @@ Contributors: paperplanefactory
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.4.15
+Stable tag: 1.4.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,6 +16,9 @@ Part of the PaperPlane mail monitoring system. Install this plugin on each clien
 The central site (running the PaperPlane Mail Test plugin) periodically calls the endpoint, verifies that `wp_mail()` works correctly, and sends an alert if something goes wrong.
 
 == Changelog ==
+
+= 1.4.16 =
+* Security: il limite delle chiamate autenticate (protezione open relay) ora è unico per sito invece che per IP, e scende da 100 a 20 ogni 5 minuti. Chi avesse rubato la chiave di un sito non può più aggirarlo usando molti indirizzi IP. Le verifiche normali della dashboard restano ben sotto il limite
 
 = 1.4.15 =
 * Errori con un codice proprio del child, così la dashboard (main 1.3.0 o successivo) mostra la causa esatta: chiave errata (`pp_mt_unauthorized`), chiave non ancora generata (`pp_mt_not_configured`), troppe verifiche in poco tempo (`pp_mt_rate_limited`, HTTP 429). Prima tutti questi casi davano il generico `rest_forbidden` di WordPress, uguale a quello di un tema o plugin che blocca la REST API
